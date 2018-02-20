@@ -1,0 +1,4 @@
+[report]
+omit = 
+    */python?.?/*
+    *_test.py
