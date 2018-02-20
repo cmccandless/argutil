@@ -1,0 +1,11 @@
+{
+    "simple": {
+        "bar": "default_for_bar"
+    },
+    "submodules":{
+        "config": "config.ini",
+        "this": {
+            "then": "that"
+        }
+    }
+}

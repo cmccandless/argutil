@@ -1,0 +1,98 @@
+{
+    "modules": {
+        "simple": {
+            "examples": [
+                {
+                    "usage": "foo_value",
+                    "description": "positional arg only"
+                },
+                {
+                    "usage": "foo_value -b bar_value",
+                    "description": "with optional arg"
+                },
+                {
+                    "usage": "foo_value --bar bar_value",
+                    "description": "optional arg long-form"
+                }
+            ],
+            "args": [
+                {
+                    "long": "foo",
+                    "help": [
+                        "positional argument"
+                    ]
+                },
+                {
+                    "short": "-b",
+                    "long": "--bar",
+                    "help": [
+                        "optional argument",
+                        "with multiline help"
+                    ]
+                }
+            ]
+        },
+        "submodules": {
+            "examples": [
+                {
+                    "usage": "this",
+                    "description": "subcommand"
+                },
+                {
+                    "usage": "-c config.cfg that",
+                    "description": "subcommand with global option"
+                }
+            ],
+            "args": [
+                {
+                    "short": "-c",
+                    "long": "--config",
+                    "help": [
+                        "global option"
+                    ]
+                }
+            ],
+            "modules": {
+                "this": {
+                    "examples": [
+                        {
+                            "usage": "--then that",
+                            "description": "this then that"
+                        }
+                    ],
+                    "args": [
+                        {
+                            "long": "--then",
+                            "help": [
+                                "option for this"
+                            ]
+                        },
+                        {
+                            "long": "--foo",
+                            "action": "store_true",
+                            "help": [
+                                "this-exclusive flag"
+                            ]
+                        }
+                    ]
+                },
+                "that": {
+                    "examples": [
+                        {
+                            "usage": "--then this",
+                            "description": "that then this"
+                        }
+                    ],
+                    "args": [
+                        {
+                            "long": "--then",
+                            "help": [
+                                "option for that"
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
