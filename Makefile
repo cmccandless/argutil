@@ -10,7 +10,10 @@ test:
 clean:
 	rm -rf dist/*
 
-package: init lint test clean
+clean-git:
+	git stash
+
+package: init clean-git lint test clean
 	python setup.py sdist
 
 publish: package
