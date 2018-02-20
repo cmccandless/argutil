@@ -3,7 +3,7 @@ from .argutil import ( # NOQA
     add_example,
     config,
     get_defaults,
-    getParser,
+    get_parser,
     init,
     load,
     save,

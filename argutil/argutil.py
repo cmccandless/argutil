@@ -13,7 +13,7 @@ import json
 import os
 import shutil
 from sys import exit
-from deepcopy import deepcopy
+from .deepcopy import deepcopy
 import logging
 
 
@@ -284,42 +284,60 @@ def _build_parser(name, definition, defaults={}, env={},
 #  @param [in] [defaultsFile] Name of file containing argument defaults
 #  @return ArgumentParser
 #
-def getParser(module, definitionsFile='commandline.json',
-              defaultsFile='defaults.json', env={}):
-    if not os.path.isfile(definitionsFile):
+def create_parser(module, definitions_file='commandline.json',
+                  defaults_file='defaults.json', env=None):
+    if not os.path.isfile(definitions_file):
         logger.error(
             'Argument definition file "{}" not found!'.format(
-                definitionsFile
+                definitions_file
             )
         )
         exit(1)
+    if env is None:
+        env = {}
 
-    jsonData = load(definitionsFile)
+    json_data = load(definitions_file)
 
-    if 'modules' not in jsonData:
+    if 'modules' not in json_data:
         return ArgumentParser(
             epilog='{} does not contain any modules'.format(
-                definitionsFile
+                definitions_file
             )
         )
-    jsonData = jsonData['modules']
-    if module not in jsonData:
+    json_data = json_data['modules']
+    if module not in json_data:
         return ArgumentParser(
             epilog='No entry for {} in {}'.format(
                 module,
-                definitionsFile
+                definitions_file
             )
         )
-    jsonData = jsonData[module]
+    json_data = json_data[module]
 
-    if os.path.isfile(defaultsFile):
-        defaults = load(defaultsFile)
+    if os.path.isfile(defaults_file):
+        defaults = load(defaults_file)
         if module in defaults:
             defaults = defaults[module]
         else:
             defaults = {}
     else:
-        logger.error('Defaults file "{}" not found!'.format(defaultsFile))
+        logger.error('Defaults file "{}" not found!'.format(defaults_file))
         exit(1)
 
-    return _build_parser(module, jsonData, defaults=defaults, env=env)
+    return _build_parser(module, json_data, defaults=defaults, env=env)
+
+
+def get_parser(__file__, env=None):
+    if env is None:
+        env = {}
+    __filename__ = '.'.join(__file__.split(os.path.sep)[-1].split('.')[:-1])
+    try:
+        if __module__ is None:
+            __module__ = __filename__
+    except NameError:
+        __module__ = __filename__
+    if __module__.startswith('__') and __module__.endswith('__'):
+        __module__ = os.path.basename(os.path.dirname(__file__))
+
+    with WorkingDirectory(__file__):
+        return create_parser(__module__, env=env)
