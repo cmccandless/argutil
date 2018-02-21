@@ -6,12 +6,12 @@ import sys
 sys.path.insert(
     0,
     os.path.abspath(os.path.join(
-            os.path.dirname(__file__),
-            '..'
+        os.path.dirname(__file__),
+        '..'
     ))
 )
 
-from argutil import WorkingDirectory  # noqa: E402
+from argutil import WorkingDirectory
 
 
 class WorkingDirectoryTest(unittest.TestCase):

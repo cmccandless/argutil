@@ -6,12 +6,12 @@ import sys
 sys.path.insert(
     0,
     os.path.abspath(os.path.join(
-            os.path.dirname(__file__),
-            '..'
+        os.path.dirname(__file__),
+        '..'
     ))
 )
 
-import argutil  # noqa: E402
+import argutil
 
 
 try:
@@ -22,7 +22,7 @@ except NameError:
 DEFINITIONS_FILE = argutil.defaults.DEFINITIONS_FILE
 
 
-class DefintionsFileTest(unittest.TestCase):
+class DefinitionsFileTest(unittest.TestCase):
     def create_json_file(self, filename, json_data):
         with open(filename, 'w') as f:
             f.write(json.dumps(json_data))
@@ -40,7 +40,7 @@ class DefintionsFileTest(unittest.TestCase):
     def test_load_returns_empty_data_on_nonexistent_file(self):
         with TempWorkingDirectory():
             self.assertIs(os.path.isfile(DEFINITIONS_FILE), False)
-            expected = {'modules': {}}
+            expected = {}
             self.assertDictEqual(argutil.load(DEFINITIONS_FILE), expected)
 
     def test_load_nonexistent_file_not_created(self):
@@ -58,9 +58,7 @@ class DefintionsFileTest(unittest.TestCase):
     def test_load_create_mode_ignores_file_contents(self):
         with TempWorkingDirectory():
             self.create_json_file(DEFINITIONS_FILE, {})
-            expected = {
-                'modules': {}
-            }
+            expected = {}
             self.assertDictEqual(argutil.load(DEFINITIONS_FILE, 'w'), expected)
 
     def test_load_error_unknown_file_mode(self):

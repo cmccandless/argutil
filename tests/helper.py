@@ -6,12 +6,12 @@ import sys
 sys.path.insert(
     0,
     os.path.abspath(os.path.join(
-            os.path.dirname(__file__),
-            '..'
+        os.path.dirname(__file__),
+        '..'
     ))
 )
 
-import argutil  # noqa: E402
+import argutil
 
 
 @contextmanager
@@ -20,3 +20,10 @@ def TempWorkingDirectory():
     with argutil.WorkingDirectory(wd):
         yield wd
     shutil.rmtree(wd)
+
+
+def tempdir(function):
+    def wrapper(*args, **kwargs):
+        with TempWorkingDirectory():
+            function(*args, **kwargs)
+    return wrapper

@@ -4,12 +4,12 @@ import sys
 sys.path.insert(
     0,
     os.path.abspath(os.path.join(
-            os.path.dirname(__file__),
-            '..'
+        os.path.dirname(__file__),
+        '..'
     ))
 )
 
-from argutil.deepcopy import deepcopy  # noqa: E402
+from argutil.deepcopy import deepcopy
 
 
 class DeepCopyTest(unittest.TestCase):
