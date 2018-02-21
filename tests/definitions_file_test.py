@@ -14,6 +14,12 @@ sys.path.insert(
 import argutil  # noqa: E402
 
 
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
+
+
 DEFINITIONS_FILE = argutil.defaults.DEFINITIONS_FILE
 
 
