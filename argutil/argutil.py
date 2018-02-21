@@ -89,33 +89,34 @@ def add_example(
     save(json_data, definitions_file)
 
 
-def add_argument(module, name, help='', short=None, action=None,
-                 nargs=None, const=None, default=None, type=None,
-                 choices=None, required=None, metavar=None, dest=None,
-                 definitions_file=defaults.DEFINITIONS_FILE):
+def add_argument(module, name, short=None,
+                 definitions_file=defaults.DEFINITIONS_FILE, **kwargs):
     json_data = load(definitions_file)
     arg = {}
     if short is not None:
         arg['short'] = short
     arg['long'] = name
-    if action is not None:
-        arg['action'] = action
-    if nargs is not None:
-        arg['nargs'] = nargs
-    if const is not None:
-        arg['const'] = const
-    if default is not None:
-        arg['default'] = default
-    if type is not None:
-        arg['type'] = type
-    if choices is not None:
-        arg['choices'] = choices
-    if required is not None:
-        arg['required'] = required
-    if metavar is not None:
-        arg['metavar'] = metavar
-    if dest is not None:
-        arg['dest'] = dest
+    params = {
+        'action', 'nargs', 'const', 'default', 'type',
+        'choices', 'required', 'help', 'metavar', 'dest'
+    }
+    for k, v in kwargs.items():
+        if k not in params:
+            raise KeyError('unrecognized key "{}"'.format(k))
+        arg[k] = v
+    help = kwargs.get('help', None)
+    if help is None:
+        help = []
+    elif isinstance(help, str):
+        help = help.split('\n')
+    elif isinstance(help, list):
+        for line in help:
+            if not isinstance(line, str):
+                raise TypeError(
+                    'help must be either a string or a list of strings'
+                )
+    else:
+        raise TypeError('help must be either a string or a list of strings')
     arg['help'] = help
 
     json_data['modules'][module]['args'].append(arg)
