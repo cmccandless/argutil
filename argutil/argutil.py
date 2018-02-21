@@ -43,7 +43,7 @@ def load(json_file, mode='a'):
         elif mode == 'r':
             raise FileNotFoundError('file could not be read: ' + json_file)
     if mode in 'wca':
-        return {'modules': {}}
+        return {}
     raise ValueError('Unknown file mode "{}"'.format(mode))
 
 
@@ -123,19 +123,22 @@ def add_argument(module, name, short=None,
     save(json_data, definitions_file)
 
 
-def set_defaults(module, args, defaults_file=defaults.DEFAULTS_FILE):
+def set_defaults(module, defaults_file=defaults.DEFAULTS_FILE, **kwargs):
     json_data = load(defaults_file)
-    for k, v in args.items():
-        json_data[module][k] = v
+    if module not in json_data:
+        json_data[module] = {}
+    module = json_data[module]
+    for k, v in kwargs.items():
+        module[k] = v
     save(json_data, defaults_file)
 
 
 def get_defaults(module, defaults_file=defaults.DEFAULTS_FILE):
     json_data = load(defaults_file)
-    return json_data[module]
+    return json_data.get(module, {})
 
 
-def split_any(text, delimiters=[]):
+def __split_any__(text, delimiters=[]):
     parts = [text]
     for delim in delimiters:
         parts = [p for ps in parts for p in ps.split(delim)]
@@ -149,7 +152,7 @@ def config(module, configs, defaults_file=defaults.DEFAULTS_FILE):
             yield '{}={}'.format(*t)
     else:
         defaults = {}
-        for k, v in [split_any(kv, '=:') for kv in configs]:
+        for k, v in [__split_any__(kv, '=:') for kv in configs]:
             if v[0] == '[' and v[-1] == ']':
                 v = [s.strip() for s in v[1:-1].split(',')]
             else:
@@ -163,7 +166,7 @@ def config(module, configs, defaults_file=defaults.DEFAULTS_FILE):
                     elif v.lower() == 'none':
                         v = None
             defaults[k] = v
-        set_defaults(module, defaults, defaults_file=defaults_file)
+        set_defaults(module, defaults_file=defaults_file, **defaults)
 
 
 def __add_argument_to_parser__(parser, param, env={}):
@@ -345,7 +348,8 @@ def get_parser(__file__, definitions_file=defaults.DEFINITIONS_FILE,
                defaults_file=defaults.DEFAULTS_FILE, env=None):
     if env is None:
         env = {}
-    __filename__ = '.'.join(__file__.split(os.path.sep)[-1].split('.')[:-1])
+    __filename__ = os.path.splitext(__file__)[0]
+    __filename__ = os.path.basename(__filename__)
     try:
         if __module__ is None:
             __module__ = __filename__
