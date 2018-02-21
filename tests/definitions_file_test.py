@@ -64,6 +64,10 @@ class DefintionsFileTest(unittest.TestCase):
             }
             self.assertDictEqual(argutil.load(DEFINITIONS_FILE, 'w'), expected)
 
+    def test_load_error_unknown_file_mode(self):
+        with self.assertRaises(ValueError):
+            argutil.load(DEFINITIONS_FILE, 'u')
+
     def test_save_creates_nonexistent_file(self):
         with TempWorkingDirectory():
             filename = 'commandline.json'
