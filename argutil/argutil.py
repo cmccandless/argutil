@@ -9,6 +9,7 @@ from argparse import (
     SUPPRESS
 )
 from .working_directory import WorkingDirectory
+from . import defaults
 import json
 import os
 import shutil
@@ -51,12 +52,12 @@ def save(json_data, json_file):
         f.write(json.dumps(json_data, indent=2))
 
 
-def init(module, definitions_file='commandline.json'):
+def init(module, definitions_file=defaults.DEFINITIONS_FILE):
     module_path = '{}.py'.format(module)
     if not os.path.isfile(module_path):
         argutil_path = os.path.abspath(__file__)
         argutil_dir = os.path.dirname(argutil_path)
-        template_path = os.path.join(argutil_dir, 'template.py')
+        template_path = os.path.join(argutil_dir, defaults.TEMPLATE_FILE)
         shutil.copy2(template_path, module_path)
     if not os.path.isfile(definitions_file):
         save({'modules': {}}, definitions_file)
@@ -69,7 +70,11 @@ def init(module, definitions_file='commandline.json'):
     save(json_data, definitions_file)
 
 
-def add_example(module, example_text, definitions_file='commandline.json'):
+def add_example(
+    module,
+    example_text,
+    definitions_file=defaults.DEFINITIONS_FILE
+):
     if not isinstance(example_text, str):
         raise ValueError('example_text must be a string!')
     json_data = load(definitions_file)
@@ -80,7 +85,7 @@ def add_example(module, example_text, definitions_file='commandline.json'):
 def add_argument(module, name, help='', short=None, action=None,
                  nargs=None, const=None, default=None, type=None,
                  choices=None, required=None, metavar=None, dest=None,
-                 definitions_file='commandline.json'):
+                 definitions_file=defaults.DEFINITIONS_FILE):
     json_data = load(definitions_file)
     arg = {}
     if short is not None:
@@ -110,14 +115,14 @@ def add_argument(module, name, help='', short=None, action=None,
     save(json_data, definitions_file)
 
 
-def set_defaults(module, args, defaults_file='defaults.json'):
+def set_defaults(module, args, defaults_file=defaults.DEFAULTS_FILE):
     json_data = load(defaults_file)
     for k, v in args.items():
         json_data[module][k] = v
     save(json_data, defaults_file)
 
 
-def get_defaults(module, defaults_file='defaults.json'):
+def get_defaults(module, defaults_file=defaults.DEFAULTS_FILE):
     json_data = load(defaults_file)
     return json_data[module]
 
@@ -129,7 +134,7 @@ def split_any(text, delimiters=[]):
     return parts
 
 
-def config(module, configs, defaults_file='defaults.json'):
+def config(module, configs, defaults_file=defaults.DEFAULTS_FILE):
     if len(configs) == 0:
         defaults = get_defaults(module, defaults_file=defaults_file)
         for t in defaults.items():
@@ -285,8 +290,8 @@ def _build_parser(name, definition, defaults={}, env={},
 #  @param [in] [defaultsFile] Name of file containing argument defaults
 #  @return ArgumentParser
 #
-def create_parser(module, definitions_file='commandline.json',
-                  defaults_file='defaults.json', env=None):
+def create_parser(module, definitions_file=defaults.DEFINITIONS_FILE,
+                  defaults_file=defaults.DEFAULTS_FILE, env=None):
     if not os.path.isfile(definitions_file):
         logger.error(
             'Argument definition file "{}" not found!'.format(
@@ -328,7 +333,8 @@ def create_parser(module, definitions_file='commandline.json',
     return _build_parser(module, json_data, defaults=defaults, env=env)
 
 
-def get_parser(__file__, env=None):
+def get_parser(__file__, definitions_file=defaults.DEFINITIONS_FILE,
+               defaults_file=defaults.DEFAULTS_FILE, env=None):
     if env is None:
         env = {}
     __filename__ = '.'.join(__file__.split(os.path.sep)[-1].split('.')[:-1])
@@ -341,4 +347,9 @@ def get_parser(__file__, env=None):
         __module__ = os.path.basename(os.path.dirname(__file__))
 
     with WorkingDirectory(__file__):
-        return create_parser(__module__, env=env)
+        return create_parser(
+            __module__,
+            definitions_file,
+            defaults_file,
+            env=env
+        )

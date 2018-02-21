@@ -14,6 +14,9 @@ sys.path.insert(
 import argutil  # noqa: E402
 
 
+DEFINITIONS_FILE = argutil.defaults.DEFINITIONS_FILE
+
+
 class DefintionsFileTest(unittest.TestCase):
     def create_json_file(self, filename, json_data):
         with open(filename, 'w') as f:
@@ -21,59 +24,53 @@ class DefintionsFileTest(unittest.TestCase):
 
     def test_load_returns_file_contents(self):
         with TempWorkingDirectory():
-            filename = 'commandline.json'
             expected = {
                 'modules': {
                     'test_script': {}
                 }
             }
-            self.create_json_file(filename, expected)
-            self.assertDictEqual(argutil.load(filename), expected)
+            self.create_json_file(DEFINITIONS_FILE, expected)
+            self.assertDictEqual(argutil.load(DEFINITIONS_FILE), expected)
 
     def test_load_returns_empty_data_on_nonexistent_file(self):
         with TempWorkingDirectory():
-            filename = 'commandline.json'
-            self.assertIs(os.path.isfile(filename), False)
+            self.assertIs(os.path.isfile(DEFINITIONS_FILE), False)
             expected = {'modules': {}}
-            self.assertDictEqual(argutil.load(filename), expected)
+            self.assertDictEqual(argutil.load(DEFINITIONS_FILE), expected)
 
     def test_load_nonexistent_file_not_created(self):
         with TempWorkingDirectory():
-            filename = 'commandline.json'
-            self.assertIs(os.path.isfile(filename), False)
-            argutil.load(filename)
-            self.assertIs(os.path.isfile(filename), False)
+            self.assertIs(os.path.isfile(DEFINITIONS_FILE), False)
+            argutil.load(DEFINITIONS_FILE)
+            self.assertIs(os.path.isfile(DEFINITIONS_FILE), False)
 
     def test_load_error_nonexistent_file_mode_read_only(self):
         with TempWorkingDirectory():
-            filename = 'commandline.json'
-            self.assertIs(os.path.isfile(filename), False)
+            self.assertIs(os.path.isfile(DEFINITIONS_FILE), False)
             with self.assertRaises(FileNotFoundError):
-                argutil.load(filename, 'r')
+                argutil.load(DEFINITIONS_FILE, 'r')
 
     def test_load_create_mode_ignores_file_contents(self):
         with TempWorkingDirectory():
-            filename = 'commandline.json'
-            self.create_json_file(filename, {})
+            self.create_json_file(DEFINITIONS_FILE, {})
             expected = {
                 'modules': {}
             }
-            self.assertDictEqual(argutil.load(filename, 'w'), expected)
+            self.assertDictEqual(argutil.load(DEFINITIONS_FILE, 'w'), expected)
 
     def test_save_creates_nonexistent_file(self):
         with TempWorkingDirectory():
             filename = 'commandline.json'
-            self.assertIs(os.path.isfile(filename), False)
+            self.assertIs(os.path.isfile(DEFINITIONS_FILE), False)
             argutil.save({}, filename)
-            self.assertIs(os.path.isfile(filename), True)
+            self.assertIs(os.path.isfile(DEFINITIONS_FILE), True)
 
     def test_save_overwrites_existing_file(self):
         with TempWorkingDirectory():
-            filename = 'commandline.json'
-            self.create_json_file(filename, {})
+            self.create_json_file(DEFINITIONS_FILE, {})
             expected = {'modules': {}}
-            argutil.save(expected, filename)
-            with open(filename) as f:
+            argutil.save(expected, DEFINITIONS_FILE)
+            with open(DEFINITIONS_FILE) as f:
                 json_data = json.load(f)
             self.assertDictEqual(json_data, expected)
 
@@ -89,7 +86,6 @@ class DefintionsFileTest(unittest.TestCase):
 
     def test_init_appends_to_existing_definitions_file(self):
         with TempWorkingDirectory():
-            filename = 'commandline.json'
             base_data = {
                 'modules': {
                     'existing_module': {
@@ -98,8 +94,8 @@ class DefintionsFileTest(unittest.TestCase):
                     }
                 }
             }
-            self.create_json_file(filename, base_data)
-            argutil.init('test_script', filename)
+            self.create_json_file(DEFINITIONS_FILE, base_data)
+            argutil.init('test_script', DEFINITIONS_FILE)
             expected = {
                 'modules': {
                     'existing_module': {
@@ -112,12 +108,11 @@ class DefintionsFileTest(unittest.TestCase):
                     }
                 }
             }
-            self.assertDictEqual(argutil.load(filename), expected)
+            self.assertDictEqual(argutil.load(DEFINITIONS_FILE), expected)
 
     def test_init_definitions_file_contains_correct_structure(self):
         with TempWorkingDirectory():
-            filename = 'commandline.json'
-            argutil.init('test_script', filename)
+            argutil.init('test_script', DEFINITIONS_FILE)
             expected = {
                 'modules': {
                     'test_script': {
@@ -126,14 +121,13 @@ class DefintionsFileTest(unittest.TestCase):
                     }
                 }
             }
-            self.assertDictEqual(argutil.load(filename), expected)
+            self.assertDictEqual(argutil.load(DEFINITIONS_FILE), expected)
 
     def test_init_error_on_bad_definitions_file(self):
         with TempWorkingDirectory():
-            filename = 'commandline.json'
-            self.create_json_file(filename, {})
+            self.create_json_file(DEFINITIONS_FILE, {})
             with self.assertRaises(KeyError):
-                argutil.init('test_script', filename)
+                argutil.init('test_script', DEFINITIONS_FILE)
 
 
 if __name__ == '__main__':
