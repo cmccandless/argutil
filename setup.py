@@ -7,5 +7,5 @@ setup(
     author='cmccandless',
     license='MIT',
     url='http://github.com/cmccandless/argutil',
-    packages=['argutil'],
+    packages=['argutil', 'tests'],
 )
