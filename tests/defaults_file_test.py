@@ -17,6 +17,9 @@ DEFAULTS_FILE = argutil.defaults.DEFAULTS_FILE
 
 
 class DefaultsFileTest(unittest.TestCase):
+    def assertCollectionEqual(self, col1, col2, msg=None):
+        self.assertSequenceEqual(sorted(col1), sorted(col2), msg)
+
     @tempdir
     def test_set_defaults_creates_file_if_nonexistent(self):
         self.assertIs(os.path.isfile(DEFAULTS_FILE), False)
@@ -77,7 +80,7 @@ class DefaultsFileTest(unittest.TestCase):
             'foo=bar',
             'bar=foo'
         ]
-        self.assertEqual(current, expected)
+        self.assertCollectionEqual(current, expected)
 
     @tempdir
     def test_config_single_property(self):
