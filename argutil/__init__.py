@@ -1,4 +1,4 @@
-from .argutil import ( # NOQA
+from .argutil import (
     add_argument,
     add_example,
     config,
@@ -8,5 +8,5 @@ from .argutil import ( # NOQA
     load,
     save,
     set_defaults,
-    WorkingDirectory
 ) 
+from .working_directory import WorkingDirectory

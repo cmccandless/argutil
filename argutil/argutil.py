@@ -8,7 +8,7 @@ from argparse import (
     ArgumentDefaultsHelpFormatter,
     SUPPRESS
 )
-from contextlib import contextmanager
+from .working_directory import WorkingDirectory
 import json
 import os
 import shutil
@@ -26,16 +26,6 @@ class RawWithDefaultsFormatter(
     ArgumentDefaultsHelpFormatter
 ):
     pass
-
-
-@contextmanager
-def WorkingDirectory(dir):
-    if os.path.isfile(dir):
-        dir = os.path.dirname(os.path.abspath(dir))
-    cwd = os.getcwd()
-    os.chdir(dir)
-    yield
-    os.chdir(cwd)
 
 
 def load(file='commandline.json', mode='r'):
