@@ -145,28 +145,39 @@ def __split_any__(text, delimiters=[]):
     return parts
 
 
-def config(module, configs, defaults_file=defaults.DEFAULTS_FILE):
-    if len(configs) == 0:
-        defaults = get_defaults(module, defaults_file=defaults_file)
-        for t in defaults.items():
-            yield '{}={}'.format(*t)
-    else:
+def __parse_value__(value):
+    v = value.strip()
+    try:
+        if '.' in value:
+            return float(v)
+        else:
+            return int(v)
+    except ValueError:
+        if v.lower() == 'true':
+            return True
+        elif v.lower() == 'false':
+            return False
+        elif v.lower() in ['none', 'null']:
+            return None
+        elif v[0] in '\'"' and v[-1] in '\'"':
+            return v[1:-1]
+        else:
+            return v
+
+
+def config(module, configs=None, defaults_file=defaults.DEFAULTS_FILE):
+    if configs:
         defaults = {}
         for k, v in [__split_any__(kv, '=:') for kv in configs]:
             if v[0] == '[' and v[-1] == ']':
-                v = [s.strip() for s in v[1:-1].split(',')]
+                v = [__parse_value__(s) for s in v[1:-1].split(',')]
             else:
-                try:
-                    v = float(v) if '.' in v else int(v)
-                except ValueError:
-                    if v.lower() == 'true':
-                        v = True
-                    elif v.lower() == 'false':
-                        v = False
-                    elif v.lower() == 'none':
-                        v = None
+                v = __parse_value__(v)
             defaults[k] = v
         set_defaults(module, defaults_file=defaults_file, **defaults)
+    else:
+        defaults = get_defaults(module, defaults_file=defaults_file)
+        return ['{}={}'.format(*t) for t in defaults.items()]
 
 
 def __add_argument_to_parser__(parser, param, env={}):
