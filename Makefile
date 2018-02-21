@@ -1,3 +1,4 @@
+.PHONY: init lint test clean clean-git package publish
 init:
 	pip install -r requirements.txt
 	
