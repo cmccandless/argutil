@@ -22,7 +22,7 @@ logger.setLevel(logging.ERROR)
 
 
 try:
-    FileNotFoundError  # noqa: F821
+    FileNotFoundError
 except NameError:
     FileNotFoundError = IOError
 
