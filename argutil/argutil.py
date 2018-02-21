@@ -28,45 +28,54 @@ class RawWithDefaultsFormatter(
     pass
 
 
-def load(file='commandline.json', mode='r'):
+def load(json_file, mode='a'):
     if mode in 'ar':
-        with open(file, 'r') as f:
-            return json.load(f)
-    elif mode in 'wc':
-        return {}
+        if os.path.isfile(json_file):
+            with open(json_file, 'r') as f:
+                return json.load(f)
+        elif mode == 'r':
+            raise FileNotFoundError(json_file)
+    if mode in 'wca':
+        return {'modules': {}}
     raise ValueError('Unknown file mode "{}"'.format(mode))
 
 
-def save(data, file=None):
-    with open(file, 'w') as f:
-        f.write(json.dumps(data, indent=2))
+def save(json_data, json_file):
+    with open(json_file, 'w') as f:
+        f.write(json.dumps(json_data, indent=2))
 
 
-def init(module, file='commandline.json', mode='a'):
+def init(module, definitions_file='commandline.json'):
     module_path = '{}.py'.format(module)
     if not os.path.isfile(module_path):
         argutil_path = os.path.abspath(__file__)
         argutil_dir = os.path.dirname(argutil_path)
         template_path = os.path.join(argutil_dir, 'template.py')
         shutil.copy2(template_path, module_path)
-    data = load(file, mode)
-    data['modules'][module] = {'examples': [], 'args': []}
-    save(data, file)
+    if not os.path.isfile(definitions_file):
+        save({'modules': {}}, definitions_file)
+    json_data = load(definitions_file)
+    if 'modules' not in json_data:
+        raise KeyError(
+            '{} does not contain key "modules"'.format(definitions_file)
+        )
+    json_data['modules'][module] = {'examples': [], 'args': []}
+    save(json_data, definitions_file)
 
 
-def add_example(module, example_text, file='commandline.json'):
+def add_example(module, example_text, definitions_file='commandline.json'):
     if not isinstance(example_text, str):
         raise ValueError('example_text must be a string!')
-    data = load(file)
-    data['modules'][module]['examples'].append(example_text)
-    save(data, file)
+    json_data = load(definitions_file)
+    json_data['modules'][module]['examples'].append(example_text)
+    save(json_data, definitions_file)
 
 
 def add_argument(module, name, help='', short=None, action=None,
                  nargs=None, const=None, default=None, type=None,
                  choices=None, required=None, metavar=None, dest=None,
-                 file='commandline.json'):
-    data = load(file)
+                 definitions_file='commandline.json'):
+    json_data = load(definitions_file)
     arg = {}
     if short is not None:
         arg['short'] = short
@@ -91,20 +100,20 @@ def add_argument(module, name, help='', short=None, action=None,
         arg['dest'] = dest
     arg['help'] = help
 
-    data['modules'][module]['args'].append(arg)
-    save(data, file)
+    json_data['modules'][module]['args'].append(arg)
+    save(json_data, definitions_file)
 
 
-def set_defaults(module, args, file='defaults.json'):
-    data = load(file)
+def set_defaults(module, args, defaults_file='defaults.json'):
+    json_data = load(defaults_file)
     for k, v in args.items():
-        data[module][k] = v
-    save(data, file)
+        json_data[module][k] = v
+    save(json_data, defaults_file)
 
 
-def get_defaults(module, file='defaults.json'):
-    data = load(file)
-    return data[module]
+def get_defaults(module, defaults_file='defaults.json'):
+    json_data = load(defaults_file)
+    return json_data[module]
 
 
 def split_any(text, delimiters=[]):
@@ -114,13 +123,13 @@ def split_any(text, delimiters=[]):
     return parts
 
 
-def config(module, configs, file='defaults.json'):
+def config(module, configs, defaults_file='defaults.json'):
     if len(configs) == 0:
-        data = get_defaults(module, file=file)
-        for t in data.items():
+        defaults = get_defaults(module, defaults_file=defaults_file)
+        for t in defaults.items():
             yield '{}={}'.format(*t)
     else:
-        data = {}
+        defaults = {}
         for k, v in [split_any(kv, '=:') for kv in configs]:
             if v[0] == '[' and v[-1] == ']':
                 v = [s.strip() for s in v[1:-1].split(',')]
@@ -134,8 +143,8 @@ def config(module, configs, file='defaults.json'):
                         v = False
                     elif v.lower() == 'none':
                         v = None
-            data[k] = v
-        set_defaults(module, data, file=file)
+            defaults[k] = v
+        set_defaults(module, defaults, defaults_file=defaults_file)
 
 
 def add_argument_to_parser(parser, param, env={}):
@@ -158,14 +167,14 @@ def add_argument_to_parser(parser, param, env={}):
                 pass
     if 'long' not in param:
         raise ValueError('args must contain "long" key')
-    long = param['long']
+    long_form = param['long']
     del param['long']
     if 'short' in param:
-        short = param['short']
+        short_form = param['short']
         del param['short']
-        parser.add_argument(short, long, **param)
+        parser.add_argument(short_form, long_form, **param)
     else:
-        parser.add_argument(long, **param)
+        parser.add_argument(long_form, **param)
 
 
 def add_example_to_parser(parserArgs, example):
@@ -192,10 +201,6 @@ def _build_parser(name, definition, defaults={}, env={},
     if 'examples' in definition and definition['examples']:
         for example in definition['examples']:
             add_example_to_parser(parserArgs, example)
-        # examples = ['examples:']
-        # examples += ['    {: <44}{}'.format(*(t.values()))
-        #              for t in definition['examples']]
-        # parserArgs['epilog'] = '\n'.join(examples)
 
     if subparsers is None:
         parser = ArgumentParser(**parserArgs)
