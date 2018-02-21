@@ -21,6 +21,12 @@ logger = logging.getLogger('argutil')
 logger.setLevel(logging.ERROR)
 
 
+try:
+    FileNotFoundError  # noqa: F821
+except NameError:
+    FileNotFoundError = IOError
+
+
 class RawWithDefaultsFormatter(
     RawTextHelpFormatter,
     ArgumentDefaultsHelpFormatter
@@ -34,7 +40,7 @@ def load(json_file, mode='a'):
             with open(json_file, 'r') as f:
                 return json.load(f)
         elif mode == 'r':
-            raise FileNotFoundError(json_file)
+            raise FileNotFoundError('file could not be read: ' + json_file)
     if mode in 'wca':
         return {'modules': {}}
     raise ValueError('Unknown file mode "{}"'.format(mode))
