@@ -2,5 +2,5 @@
 import argutil
 
 env = {}
-parser = argutil.create_parser(__file__, env)
+parser = argutil.get_parser(__file__, env)
 opts = parser.parse_args()

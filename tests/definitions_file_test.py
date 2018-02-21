@@ -19,7 +19,6 @@ try:
 except NameError:
     FileNotFoundError = IOError
 
-
 DEFINITIONS_FILE = argutil.defaults.DEFINITIONS_FILE
 
 

@@ -72,13 +72,20 @@ def init(module, definitions_file=defaults.DEFINITIONS_FILE):
 
 def add_example(
     module,
-    example_text,
+    usage,
+    description='',
     definitions_file=defaults.DEFINITIONS_FILE
 ):
-    if not isinstance(example_text, str):
-        raise ValueError('example_text must be a string!')
+    if not isinstance(usage, str):
+        raise ValueError('usage must be a string!')
+    if not isinstance(description, str):
+        raise ValueError('description must be a string!')
     json_data = load(definitions_file)
-    json_data['modules'][module]['examples'].append(example_text)
+    example = {
+        'usage': usage,
+        'description': description
+    }
+    json_data['modules'][module]['examples'].append(example)
     save(json_data, definitions_file)
 
 
@@ -158,7 +165,7 @@ def config(module, configs, defaults_file=defaults.DEFAULTS_FILE):
         set_defaults(module, defaults, defaults_file=defaults_file)
 
 
-def add_argument_to_parser(parser, param, env={}):
+def __add_argument_to_parser__(parser, param, env={}):
     param = dict(param)
     if 'help' in param:
         if param['help'] is None:
@@ -188,14 +195,14 @@ def add_argument_to_parser(parser, param, env={}):
         parser.add_argument(long_form, **param)
 
 
-def add_example_to_parser(parserArgs, example):
+def __add_example_to_parser__(parserArgs, example):
     if 'epilog' not in parserArgs:
         parserArgs['epilog'] = 'examples:'
     parserArgs['epilog'] += '\n    {:<44}{}'.format(*(example.values()))
 
 
-def _build_parser(name, definition, defaults={}, env={},
-                  subparsers=None, templates={}):
+def __build_parser__(name, definition, defaults={}, env={},
+                     subparsers=None, templates={}):
     parserArgs = dict(prog=name, formatter_class=RawWithDefaultsFormatter)
 
     if 'template' in definition:
@@ -205,13 +212,13 @@ def _build_parser(name, definition, defaults={}, env={},
         template = templates[template_name]
         if 'examples' in template:
             for example in template['examples']:
-                add_example_to_parser(parserArgs, example)
+                __add_example_to_parser__(parserArgs, example)
     else:
         template = None
 
     if 'examples' in definition and definition['examples']:
         for example in definition['examples']:
-            add_example_to_parser(parserArgs, example)
+            __add_example_to_parser__(parserArgs, example)
 
     if subparsers is None:
         parser = ArgumentParser(**parserArgs)
@@ -224,12 +231,12 @@ def _build_parser(name, definition, defaults={}, env={},
             parser.set_defaults(func=env[name])
     if 'args' in definition:
         for param in definition['args']:
-            add_argument_to_parser(parser, param, env)
+            __add_argument_to_parser__(parser, param, env)
 
     if template:
         if 'args' in template:
             for param in template['args']:
-                add_argument_to_parser(parser, param, env)
+                __add_argument_to_parser__(parser, param, env)
 
     # Apply default values
     for k, v in defaults.items():
@@ -271,7 +278,7 @@ def _build_parser(name, definition, defaults={}, env={},
                 sub_defaults = defaults[name]
             else:
                 sub_defaults = {}
-            _build_parser(
+            __build_parser__(
                 name,
                 submodule,
                 sub_defaults,
@@ -290,8 +297,8 @@ def _build_parser(name, definition, defaults={}, env={},
 #  @param [in] [defaultsFile] Name of file containing argument defaults
 #  @return ArgumentParser
 #
-def create_parser(module, definitions_file=defaults.DEFINITIONS_FILE,
-                  defaults_file=defaults.DEFAULTS_FILE, env=None):
+def __create_parser__(module, definitions_file=defaults.DEFINITIONS_FILE,
+                      defaults_file=defaults.DEFAULTS_FILE, env=None):
     if not os.path.isfile(definitions_file):
         logger.error(
             'Argument definition file "{}" not found!'.format(
@@ -330,7 +337,7 @@ def create_parser(module, definitions_file=defaults.DEFINITIONS_FILE,
         logger.error('Defaults file "{}" not found!'.format(defaults_file))
         exit(1)
 
-    return _build_parser(module, json_data, defaults=defaults, env=env)
+    return __build_parser__(module, json_data, defaults=defaults, env=env)
 
 
 def get_parser(__file__, definitions_file=defaults.DEFINITIONS_FILE,
@@ -347,7 +354,7 @@ def get_parser(__file__, definitions_file=defaults.DEFINITIONS_FILE,
         __module__ = os.path.basename(os.path.dirname(__file__))
 
     with WorkingDirectory(__file__):
-        return create_parser(
+        return __create_parser__(
             __module__,
             definitions_file,
             defaults_file,
