@@ -1,4 +1,4 @@
-.PHONY: init lint test clean clean-git package publish
+.PHONY: init lint test report clean clean-git package publish
 init:
 	pip install -r requirements.txt
 	
@@ -7,6 +7,9 @@ lint:
 
 test:
 	coverage run -m pytest -v
+
+report: lint test
+	coverage report -m 
 
 clean:
 	rm -rf dist/*

@@ -12,7 +12,6 @@ sys.path.insert(
 
 import argutil
 
-DEFINITIONS_FILE = argutil.defaults.DEFINITIONS_FILE
 DEFAULTS_FILE = argutil.defaults.DEFAULTS_FILE
 
 

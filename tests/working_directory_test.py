@@ -11,7 +11,7 @@ sys.path.insert(
     ))
 )
 
-from argutil import WorkingDirectory
+from argutil import WorkingDirectory, pushd
 
 
 class WorkingDirectoryTest(unittest.TestCase):
@@ -22,19 +22,33 @@ class WorkingDirectoryTest(unittest.TestCase):
         shutil.rmtree(self.wd)
 
     def test_cwd_is_changed(self):
-        with open(os.path.join(self.wd, 'test.txt'), 'w') as f:
+        filename = 'dirpath.txt'
+        with open(os.path.join(self.wd, filename), 'w') as f:
             f.write('it works!')
         with WorkingDirectory(self.wd):
-            with open('test.txt') as f:
+            with open(filename) as f:
                 self.assertEqual(f.read(), 'it works!')
 
     def test_cwd_set_to_parent_of_file(self):
-        filepath = os.path.join(self.wd, 'test.txt')
+        filename = 'filepath.txt'
+        filepath = os.path.join(self.wd, filename)
         with open(filepath, 'w') as f:
             f.write('filepaths work!')
         with WorkingDirectory(filepath):
-            with open('test.txt') as f:
+            with open(filename) as f:
                 self.assertEqual(f.read(), 'filepaths work!')
+
+    def test_pushd(self):
+        filename = 'pushd.txt'
+        with open(os.path.join(self.wd, filename), 'w') as f:
+            f.write('pushd works!')
+
+        @pushd(self.wd)
+        def in_wd():
+            with open(filename) as f:
+                self.assertEqual(f.read(), 'pushd works!')
+        self.assertIs(os.path.isfile(filename), False)
+        in_wd()
 
 
 if __name__ == '__main__':

@@ -103,20 +103,20 @@ def add_argument(module, name, short=None,
     for k, v in kwargs.items():
         if k not in params:
             raise KeyError('unrecognized key "{}"'.format(k))
+        elif k == 'type' and isinstance(v, type):
+            v = v.__name__
         arg[k] = v
     help = kwargs.get('help', None)
-    if help is None:
-        help = []
-    elif isinstance(help, str):
-        help = help.split('\n')
-    elif isinstance(help, list):
-        for line in help:
-            if not isinstance(line, str):
-                raise TypeError(
-                    'help must be either a string or a list of strings'
-                )
-    else:
-        raise TypeError('help must be either a string or a list of strings')
+    help_err_msg = 'help must be None, a string, or a list of strings'
+    if help is not None:
+        if isinstance(help, str):
+            help = help.split('\n')
+        elif isinstance(help, list):
+            for line in help:
+                if not isinstance(line, str):
+                    raise TypeError(help_err_msg)
+        else:
+            raise TypeError(help_err_msg)
     arg['help'] = help
 
     json_data['modules'][module]['args'].append(arg)
@@ -180,6 +180,44 @@ def config(module, configs=None, defaults_file=defaults.DEFAULTS_FILE):
         return ['{}={}'.format(*t) for t in defaults.items()]
 
 
+primitives = {
+    'int': int,
+    'float': float,
+    'complex': complex,
+    'str': str,
+    'list': list,
+    'tuple': tuple,
+    'bytes': bytes,
+    'memoryview': memoryview,
+    'bytearray': bytearray,
+    'range': range,
+    'set': set,
+    'frozenset': frozenset,
+    'dict': dict,
+}
+
+# Python 2 compatibility
+try:
+    primitives['long'] = long
+except NameError:
+    pass
+
+try:
+    primitives['unicode'] = unicode
+except NameError:
+    pass
+
+try:
+    primitives['buffer'] = buffer
+except NameError:
+    pass
+
+try:
+    primitives['xrange'] = xrange
+except NameError:
+    primitives['xrange'] = range
+
+
 def __add_argument_to_parser__(parser, param, env={}):
     param = dict(param)
     if 'help' in param:
@@ -195,9 +233,9 @@ def __add_argument_to_parser__(parser, param, env={}):
             param['type'] = env[func]
         except KeyError:
             try:
-                param['type'] = globals()[func]
+                param['type'] = primitives[func]
             except KeyError:
-                pass
+                param['type'] = globals()[func]
     if 'long' not in param:
         raise ValueError('args must contain "long" key')
     long_form = param['long']
@@ -349,29 +387,28 @@ def __create_parser__(module, definitions_file=defaults.DEFINITIONS_FILE,
         else:
             defaults = {}
     else:
-        logger.error('Defaults file "{}" not found!'.format(defaults_file))
-        exit(1)
+        defaults = {}
 
     return __build_parser__(module, json_data, defaults=defaults, env=env)
 
 
-def get_parser(__file__, definitions_file=defaults.DEFINITIONS_FILE,
-               defaults_file=defaults.DEFAULTS_FILE, env=None):
+def get_module(filepath):
+    __filename__ = os.path.splitext(filepath)[0]
+    return os.path.basename(__filename__)
+
+
+def get_parser(
+    filepath,
+    definitions_file=defaults.DEFINITIONS_FILE,
+    defaults_file=defaults.DEFAULTS_FILE,
+    env=None
+):
     if env is None:
         env = {}
-    __filename__ = os.path.splitext(__file__)[0]
-    __filename__ = os.path.basename(__filename__)
-    try:
-        if __module__ is None:
-            __module__ = __filename__
-    except NameError:
-        __module__ = __filename__
-    if __module__.startswith('__') and __module__.endswith('__'):
-        __module__ = os.path.basename(os.path.dirname(__file__))
-
-    with WorkingDirectory(__file__):
+    module = get_module(filepath)
+    with WorkingDirectory(filepath):
         return __create_parser__(
-            __module__,
+            module,
             definitions_file,
             defaults_file,
             env=env

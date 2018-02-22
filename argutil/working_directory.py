@@ -10,3 +10,12 @@ def WorkingDirectory(dir):
     os.chdir(dir)
     yield
     os.chdir(cwd)
+
+
+def pushd(path):
+    def _dec(function):
+        def _wrapper(*args, **kwargs):
+            with WorkingDirectory(path):
+                function(*args, **kwargs)
+        return _wrapper
+    return _dec

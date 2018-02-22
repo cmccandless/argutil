@@ -7,6 +7,7 @@ from .argutil import (
     add_example,
     get_defaults,
     set_defaults,
+    get_module,
     get_parser,
 ) 
-from .working_directory import WorkingDirectory
+from .working_directory import WorkingDirectory, pushd

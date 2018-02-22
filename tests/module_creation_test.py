@@ -57,7 +57,7 @@ class ModuleCreationTest(unittest.TestCase):
                     'args': [
                         {
                             'long': 'foo',
-                            'help': []
+                            'help': None
                         }
                     ]
                 }
@@ -65,6 +65,23 @@ class ModuleCreationTest(unittest.TestCase):
         }
         with self.assertModifiedModule(expected) as module:
             argutil.add_argument(module, 'foo')
+
+    def test_add_argument_help_is_none(self):
+        expected = {
+            'modules': {
+                'test_script': {
+                    'examples': [],
+                    'args': [
+                        {
+                            'long': 'foo',
+                            'help': None
+                        }
+                    ]
+                }
+            }
+        }
+        with self.assertModifiedModule(expected) as module:
+            argutil.add_argument(module, 'foo', help=None)
 
     def test_add_argument_help_is_str(self):
         expected = {
@@ -144,7 +161,7 @@ class ModuleCreationTest(unittest.TestCase):
                         {
                             'short': '-f',
                             'long': '--foo',
-                            'help': []
+                            'help': None
                         }
                     ]
                 }
@@ -162,7 +179,7 @@ class ModuleCreationTest(unittest.TestCase):
                         {
                             'long': '--foo',
                             'action': 'store_true',
-                            'help': []
+                            'help': None
                         }
                     ]
                 }
@@ -180,7 +197,7 @@ class ModuleCreationTest(unittest.TestCase):
                         {
                             'long': 'foo',
                             'nargs': '+',
-                            'help': []
+                            'help': None
                         }
                     ]
                 }
