@@ -17,6 +17,12 @@ import argutil
 DEFINITIONS_FILE = argutil.defaults.DEFINITIONS_FILE
 DEFAULTS_FILE = argutil.defaults.DEFAULTS_FILE
 
+try:
+    PermissionError
+except NameError:
+    class PermissionError(Exception):
+        pass
+
 
 class ParserCreationTest(unittest.TestCase):
     def assertCollectionEqual(self, col1, col2, msg=None):

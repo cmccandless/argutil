@@ -15,6 +15,12 @@ import argutil
 
 DEFINITIONS_FILE = argutil.defaults.DEFINITIONS_FILE
 
+try:
+    PermissionError
+except NameError:
+    class PermissionError(Exception):
+        pass
+
 
 class ModuleCreationTest(unittest.TestCase):
     @contextmanager
