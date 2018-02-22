@@ -15,15 +15,18 @@ import argutil
 
 
 @contextmanager
-def TempWorkingDirectory():
-    wd = tempfile.mkdtemp()
+def TempWorkingDirectory(dir=None, cleanup=True):
+    wd = tempfile.mkdtemp(dir=dir)
     with argutil.WorkingDirectory(wd):
         yield wd
-    shutil.rmtree(wd)
+    if cleanup:
+        shutil.rmtree(wd)
 
 
-def tempdir(function):
-    def wrapper(*args, **kwargs):
-        with TempWorkingDirectory():
-            function(*args, **kwargs)
-    return wrapper
+def tempdir(dir=None, cleanup=True):
+    def dec(function):
+        def wrapper(*args, **kwargs):
+            with TempWorkingDirectory(dir, cleanup):
+                function(*args, **kwargs)
+        return wrapper
+    return dec

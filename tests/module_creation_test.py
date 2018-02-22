@@ -1,5 +1,7 @@
 import unittest
 from .helper import TempWorkingDirectory
+import tempfile
+import shutil
 from contextlib import contextmanager
 import os
 import sys
@@ -23,9 +25,23 @@ except NameError:
 
 
 class ModuleCreationTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.wd = tempfile.mkdtemp()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Try to clean up, but allowed to fail.
+        # Since a temporary directory is used, it will be clear
+        # on next system reboot
+        try:
+            shutil.rmtree(cls.wd)
+        except PermissionError:
+            pass
+
     @contextmanager
     def assertModifiedModule(self, expected=None, module='test_script'):
-        with TempWorkingDirectory():
+        with TempWorkingDirectory(ModuleCreationTest.wd, False):
             argutil.init(module)
             yield module
             self.assertDictEqual(argutil.load(DEFINITIONS_FILE), expected)

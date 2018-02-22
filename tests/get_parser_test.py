@@ -24,7 +24,7 @@ except NameError:
         pass
 
 
-class ParserCreationTest(unittest.TestCase):
+class GetParserTest(unittest.TestCase):
     def assertCollectionEqual(self, col1, col2, msg=None):
         self.assertSequenceEqual(sorted(col1), sorted(col2), msg)
 
@@ -68,8 +68,8 @@ class ParserCreationTest(unittest.TestCase):
             pass
 
     def get_opts(self, *args):
-        with argutil.WorkingDirectory(ParserCreationTest.wd):
-            return ParserCreationTest.parser.parse_args(args)
+        with argutil.WorkingDirectory(GetParserTest.wd):
+            return GetParserTest.parser.parse_args(args)
 
     def test_positional(self):
         self.assertEqual(self.get_opts('test').positional, 'test')
@@ -124,7 +124,7 @@ class ParserCreationTest(unittest.TestCase):
             'abc'
         )
 
-    @tempdir
+    @tempdir()
     def test_error_unknown_type(self):
         filename = 'bad_module.py'
         module = argutil.get_module(filename)
@@ -133,7 +133,7 @@ class ParserCreationTest(unittest.TestCase):
         with self.assertRaises(KeyError):
             argutil.get_parser(filename, env={})
 
-    @tempdir
+    @tempdir()
     def test_error_missing_long_key(self):
         filename = 'bad_module.py'
         module = argutil.get_module(filename)

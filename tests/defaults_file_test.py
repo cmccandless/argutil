@@ -19,17 +19,17 @@ class DefaultsFileTest(unittest.TestCase):
     def assertCollectionEqual(self, col1, col2, msg=None):
         self.assertSequenceEqual(sorted(col1), sorted(col2), msg)
 
-    @tempdir
+    @tempdir()
     def test_set_defaults_creates_file_if_nonexistent(self):
         self.assertIs(os.path.isfile(DEFAULTS_FILE), False)
         argutil.set_defaults('test_script', DEFAULTS_FILE)
         self.assertIs(os.path.isfile(DEFAULTS_FILE), True)
 
-    @tempdir
+    @tempdir()
     def test_get_defaults_nonexistent_defaults_file(self):
         self.assertDictEqual(argutil.get_defaults('test_script'), {})
 
-    @tempdir
+    @tempdir()
     def test_get_defaults(self):
         expected = {}
         module = 'test_script'
@@ -39,7 +39,7 @@ class DefaultsFileTest(unittest.TestCase):
             expected
         )
 
-    @tempdir
+    @tempdir()
     def test_get_defaults_existing_entries(self):
         expected = {
             'foo': 'bar',
@@ -52,20 +52,20 @@ class DefaultsFileTest(unittest.TestCase):
             expected
         )
 
-    @tempdir
+    @tempdir()
     def test_get_defaults_nonexistent_module(self):
         expected = {}
         argutil.set_defaults('test_script', foo='bar')
         self.assertDictEqual(argutil.get_defaults('other_script'), expected)
 
-    @tempdir
+    @tempdir()
     def test_config_fetch_no_defaults(self):
         module = 'test_script'
         current = list(argutil.config(module, []))
         expected = []
         self.assertEqual(current, expected)
 
-    @tempdir
+    @tempdir()
     def test_config_fetch_has_defaults(self):
         module = 'test_script'
         argutil.set_defaults(
@@ -81,7 +81,7 @@ class DefaultsFileTest(unittest.TestCase):
         ]
         self.assertCollectionEqual(current, expected)
 
-    @tempdir
+    @tempdir()
     def test_config_single_property(self):
         module = 'test_script'
         argutil.config(module, ['foo=bar'])
@@ -91,7 +91,7 @@ class DefaultsFileTest(unittest.TestCase):
             expected
         )
 
-    @tempdir
+    @tempdir()
     def test_config_multiple_properties(self):
         module = 'test_script'
         argutil.config(
@@ -124,7 +124,7 @@ class DefaultsFileTest(unittest.TestCase):
             expected
         )
 
-    @tempdir
+    @tempdir()
     def test_config_list_property(self):
         module = 'test_script'
         argutil.config(
