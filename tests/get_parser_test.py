@@ -22,17 +22,18 @@ class ParserCreationTest(unittest.TestCase):
     def assertCollectionEqual(self, col1, col2, msg=None):
         self.assertSequenceEqual(sorted(col1), sorted(col2), msg)
 
-    def setUp(self):
-        self.wd = tempfile.mkdtemp()
-        self.filepath = 'test_script.py'
-        self.module = argutil.get_module(self.filepath)
-        self.env = {
+    @classmethod
+    def setUpClass(cls):
+        cls.wd = tempfile.mkdtemp()
+        cls.filepath = 'test_script.py'
+        cls.module = argutil.get_module(cls.filepath)
+        cls.env = {
             'l_str': lambda s: str(s).lower(),
         }
-        with argutil.WorkingDirectory(self.wd):
+        with argutil.WorkingDirectory(cls.wd):
             def add_arg(name, **kwargs):
-                return argutil.add_argument(self.module, name, **kwargs)
-            argutil.init(self.module)
+                return argutil.add_argument(cls.module, name, **kwargs)
+            argutil.init(cls.module)
             add_arg('positional')
             add_arg('positional_list', nargs='*', type=int)
             add_arg('--flag', action='store_true', help='boolean flag option')
@@ -45,23 +46,24 @@ class ParserCreationTest(unittest.TestCase):
             )
             add_arg('--env-type', type='l_str')
             argutil.add_example(
-                self.module,
+                cls.module,
                 'test --flag', 'positional w/ optional flag'
             )
-            self.parser = argutil.get_parser(self.filepath, env=self.env)
+            cls.parser = argutil.get_parser(cls.filepath, env=cls.env)
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         # Try to clean up, but allowed to fail.
         # Since a temporary directory is used, it will be clear
         # on next system reboot
         try:
-            shutil.rmtree(self.wd)
+            shutil.rmtree(cls.wd)
         except PermissionError:
             pass
 
     def get_opts(self, *args):
-        with argutil.WorkingDirectory(self.wd):
-            return self.parser.parse_args(args)
+        with argutil.WorkingDirectory(ParserCreationTest.wd):
+            return ParserCreationTest.parser.parse_args(args)
 
     def test_positional(self):
         self.assertEqual(self.get_opts('test').positional, 'test')
