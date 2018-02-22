@@ -23,6 +23,11 @@ except NameError:
     class PermissionError(Exception):
         pass
 
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
+
 
 class ModuleCreationTest(unittest.TestCase):
     @classmethod
@@ -32,11 +37,13 @@ class ModuleCreationTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         # Try to clean up, but allowed to fail.
-        # Since a temporary directory is used, it will be clear
+        # Since a temporary directory is used, it will be cleared
         # on next system reboot
         try:
             shutil.rmtree(cls.wd)
         except PermissionError:
+            pass
+        except FileNotFoundError:
             pass
 
     @contextmanager
