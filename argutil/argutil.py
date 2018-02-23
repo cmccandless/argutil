@@ -17,7 +17,7 @@ from sys import exit
 from .deepcopy import deepcopy
 import logging
 
-VERSION = '1.0.4'
+VERSION = '1.0.5'
 
 logger = logging.getLogger('argutil')
 logger.setLevel(logging.ERROR)
