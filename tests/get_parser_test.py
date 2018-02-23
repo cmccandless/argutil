@@ -11,6 +11,7 @@ sys.path.insert(
 )
 
 import argutil
+from argutil import ParserDefinition
 
 DEFINITIONS_FILE = argutil.defaults.DEFINITIONS_FILE
 DEFAULTS_FILE = argutil.defaults.DEFAULTS_FILE
@@ -39,9 +40,10 @@ class GetParserTest(unittest.TestCase):
             'l_str': lambda s: str(s).lower(),
         }
         with argutil.WorkingDirectory(WD):
+            cls.parser_def = ParserDefinition.create(cls.filepath)
+
             def add_arg(name, **kwargs):
-                return argutil.add_argument(cls.module, name, **kwargs)
-            argutil.init(cls.module)
+                return cls.parser_def.add_argument(name, **kwargs)
             add_arg('positional')
             add_arg('positional_list', nargs='*', type=int)
             add_arg('--flag', action='store_true', help='boolean flag option')
@@ -53,11 +55,10 @@ class GetParserTest(unittest.TestCase):
                 default=[]
             )
             add_arg('--env-type', type='l_str')
-            argutil.add_example(
-                cls.module,
+            cls.parser_def.add_example(
                 'test --flag', 'positional w/ optional flag'
             )
-            cls.parser = argutil.get_parser(cls.filepath, env=cls.env)
+            cls.parser = cls.parser_def.get_parser(cls.env)
 
     def get_opts(self, *args):
         with argutil.WorkingDirectory(WD):
@@ -119,17 +120,15 @@ class GetParserTest(unittest.TestCase):
     @tempdir(WD)
     def test_error_unknown_type(self):
         filename = 'bad_module.py'
-        module = argutil.get_module(filename)
-        argutil.init(module)
-        argutil.add_argument(module, 'unknown_type', type='shoe')
+        parser_def = ParserDefinition.create(filename)
+        parser_def.add_argument('unknown_type', type='shoe')
         with self.assertRaises(KeyError):
-            argutil.get_parser(filename, env={})
+            parser_def.get_parser()
 
     @tempdir(WD)
     def test_error_missing_long_key(self):
         filename = 'bad_module.py'
-        module = argutil.get_module(filename)
-        argutil.init(module)
+        parser_def = ParserDefinition.create(filename)
         json_data = {
             'modules': {
                 'bad_module': {
@@ -144,7 +143,7 @@ class GetParserTest(unittest.TestCase):
         }
         argutil.save(json_data, DEFINITIONS_FILE)
         with self.assertRaises(ValueError):
-            argutil.get_parser('bad_module.py')
+            parser_def.get_parser()
 
 
 if __name__ == '__main__':

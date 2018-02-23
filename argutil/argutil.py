@@ -17,7 +17,7 @@ from sys import exit
 from .deepcopy import deepcopy
 import logging
 
-VERSION = '1.0.7'
+VERSION = '1.1.0'
 
 logger = logging.getLogger('argutil')
 logger.setLevel(logging.ERROR)
@@ -26,158 +26,6 @@ try:
     FileNotFoundError
 except NameError:
     FileNotFoundError = IOError
-
-
-class RawWithDefaultsFormatter(
-    RawTextHelpFormatter,
-    ArgumentDefaultsHelpFormatter
-):
-    pass
-
-
-def load(json_file, mode='a'):
-    if mode in 'ar':
-        if os.path.isfile(json_file):
-            with open(json_file, 'r') as f:
-                return json.load(f)
-        elif mode == 'r':
-            raise FileNotFoundError('file could not be read: ' + json_file)
-    if mode in 'wca':
-        return {}
-    raise ValueError('Unknown file mode "{}"'.format(mode))
-
-
-def save(json_data, json_file):
-    with open(json_file, 'w') as f:
-        f.write(json.dumps(json_data, indent=2))
-
-
-def init(module, definitions_file=defaults.DEFINITIONS_FILE):
-    module_path = '{}.py'.format(module)
-    if not os.path.isfile(module_path):
-        argutil_path = os.path.abspath(__file__)
-        argutil_dir = os.path.dirname(argutil_path)
-        template_path = os.path.join(argutil_dir, defaults.TEMPLATE_FILE)
-        shutil.copy2(template_path, module_path)
-    if not os.path.isfile(definitions_file):
-        save({'modules': {}}, definitions_file)
-    json_data = load(definitions_file)
-    if 'modules' not in json_data:
-        raise KeyError(
-            '{} does not contain key "modules"'.format(definitions_file)
-        )
-    json_data['modules'][module] = {'examples': [], 'args': []}
-    save(json_data, definitions_file)
-
-
-def add_example(
-    module,
-    usage,
-    description='',
-    definitions_file=defaults.DEFINITIONS_FILE
-):
-    if not isinstance(usage, str):
-        raise ValueError('usage must be a string!')
-    if not isinstance(description, str):
-        raise ValueError('description must be a string!')
-    json_data = load(definitions_file)
-    example = {
-        'usage': usage,
-        'description': description
-    }
-    json_data['modules'][module]['examples'].append(example)
-    save(json_data, definitions_file)
-
-
-def add_argument(module, name, short=None,
-                 definitions_file=defaults.DEFINITIONS_FILE, **kwargs):
-    json_data = load(definitions_file)
-    arg = {}
-    if short is not None:
-        arg['short'] = short
-    arg['long'] = name
-    params = {
-        'action', 'nargs', 'const', 'default', 'type',
-        'choices', 'required', 'help', 'metavar', 'dest'
-    }
-    for k, v in kwargs.items():
-        if k not in params:
-            raise KeyError('unrecognized key "{}"'.format(k))
-        elif k == 'type' and isinstance(v, type):
-            v = v.__name__
-        arg[k] = v
-    help = kwargs.get('help', None)
-    help_err_msg = 'help must be None, a string, or a list of strings'
-    if help is not None:
-        if isinstance(help, str):
-            help = help.split('\n')
-        elif isinstance(help, list):
-            for line in help:
-                if not isinstance(line, str):
-                    raise TypeError(help_err_msg)
-        else:
-            raise TypeError(help_err_msg)
-    arg['help'] = help
-
-    json_data['modules'][module]['args'].append(arg)
-    save(json_data, definitions_file)
-
-
-def set_defaults(module, defaults_file=defaults.DEFAULTS_FILE, **kwargs):
-    json_data = load(defaults_file)
-    if module not in json_data:
-        json_data[module] = {}
-    module = json_data[module]
-    for k, v in kwargs.items():
-        module[k] = v
-    save(json_data, defaults_file)
-
-
-def get_defaults(module, defaults_file=defaults.DEFAULTS_FILE):
-    json_data = load(defaults_file)
-    return json_data.get(module, {})
-
-
-def __split_any__(text, delimiters=[]):
-    parts = [text]
-    for delim in delimiters:
-        parts = [p for ps in parts for p in ps.split(delim)]
-    return parts
-
-
-def __parse_value__(value):
-    v = value.strip()
-    try:
-        if '.' in value:
-            return float(v)
-        else:
-            return int(v)
-    except ValueError:
-        if v.lower() == 'true':
-            return True
-        elif v.lower() == 'false':
-            return False
-        elif v.lower() in ['none', 'null']:
-            return None
-        elif v[0] in '\'"' and v[-1] in '\'"':
-            return v[1:-1]
-        else:
-            return v
-
-
-def config(module, configs=None, defaults_file=defaults.DEFAULTS_FILE):
-    if configs:
-        defaults = {}
-        for k, v in [__split_any__(kv, '=:') for kv in configs]:
-            if v[0] == '[' and v[-1] == ']':
-                v = [__parse_value__(s) for s in v[1:-1].split(',')]
-            else:
-                v = __parse_value__(v)
-            defaults[k] = v
-        set_defaults(module, defaults_file=defaults_file, **defaults)
-    else:
-        defaults = get_defaults(module, defaults_file=defaults_file)
-        return ['{}={}'.format(*t) for t in defaults.items()]
 
 
 primitives = {
@@ -216,6 +64,225 @@ try:
     primitives['xrange'] = xrange
 except NameError:
     primitives['xrange'] = range
+
+
+class RawWithDefaultsFormatter(
+    RawTextHelpFormatter,
+    ArgumentDefaultsHelpFormatter
+):
+    pass
+
+
+class ParserDefinition(object):
+    @staticmethod
+    def create(
+        filepath,
+        definitions_file=defaults.DEFINITIONS_FILE,
+        defaults_file=defaults.DEFAULTS_FILE,
+        fail_if_exists=False,
+    ):
+        module = get_module(filepath)
+        if not os.path.isfile(filepath):
+            argutil_path = os.path.abspath(__file__)
+            argutil_dir = os.path.dirname(argutil_path)
+            template_path = os.path.join(argutil_dir, defaults.TEMPLATE_FILE)
+            shutil.copy2(template_path, filepath)
+        if not os.path.isfile(definitions_file):
+            save({'modules': {}}, definitions_file)
+        json_data = load(definitions_file)
+        if 'modules' not in json_data:
+            raise KeyError(
+                '{} does not contain key "modules"'.format(definitions_file)
+            )
+        if module in json_data:
+            if fail_if_exists:
+                raise KeyError('module already defined')
+        else:
+            json_data['modules'][module] = {'examples': [], 'args': []}
+        save(json_data, definitions_file)
+        return ParserDefinition(filepath, definitions_file, defaults_file)
+
+    def __init__(
+        self,
+        filepath,
+        definitions_file=defaults.DEFINITIONS_FILE,
+        defaults_file=defaults.DEFAULTS_FILE
+    ):
+        self.filepath = filepath
+        self.module = get_module(filepath)
+        self.definitions_file = definitions_file
+        self.defaults_file = defaults_file
+
+    def add_example(
+        self,
+        usage,
+        description='',
+    ):
+        if not isinstance(usage, str):
+            raise ValueError('usage must be a string!')
+        if not isinstance(description, str):
+            raise ValueError('description must be a string!')
+        json_data = load(self.definitions_file)
+        example = {
+            'usage': usage,
+            'description': description
+        }
+        json_data['modules'][self.module]['examples'].append(example)
+        save(json_data, self.definitions_file)
+
+    def add_argument(
+        self,
+        name,
+        short=None,
+        **kwargs
+    ):
+        json_data = load(self.definitions_file)
+        arg = {}
+        if short is not None:
+            arg['short'] = short
+        arg['long'] = name
+        params = {
+            'action', 'nargs', 'const', 'default', 'type',
+            'choices', 'required', 'help', 'metavar', 'dest'
+        }
+        for k, v in kwargs.items():
+            if k not in params:
+                raise KeyError('unrecognized key "{}"'.format(k))
+            elif k == 'type' and isinstance(v, type):
+                v = v.__name__
+            arg[k] = v
+        help = kwargs.get('help', None)
+        help_err_msg = 'help must be None, a string, or a list of strings'
+        if help is not None:
+            if isinstance(help, str):
+                help = help.split('\n')
+            elif isinstance(help, list):
+                for line in help:
+                    if not isinstance(line, str):
+                        raise TypeError(help_err_msg)
+            else:
+                raise TypeError(help_err_msg)
+        arg['help'] = help
+
+        json_data['modules'][self.module]['args'].append(arg)
+        save(json_data, self.definitions_file)
+
+    def set_defaults(self, **kwargs):
+        json_data = load(self.defaults_file)
+        if self.module not in json_data:
+            json_data[self.module] = {}
+        module = json_data[self.module]
+        for k, v in kwargs.items():
+            module[k] = v
+        save(json_data, self.defaults_file)
+
+    def get_defaults(self):
+        json_data = load(self.defaults_file)
+        return json_data.get(self.module, {})
+
+    def config(self, configs=None):
+        if configs:
+            defaults = {}
+            for k, v in [__split_any__(kv, '=:') for kv in configs]:
+                if v[0] == '[' and v[-1] == ']':
+                    v = [__parse_value__(s) for s in v[1:-1].split(',')]
+                else:
+                    v = __parse_value__(v)
+                defaults[k] = v
+            self.set_defaults(**defaults)
+        else:
+            defaults = self.get_defaults()
+            return ['{}={}'.format(*t) for t in defaults.items()]
+
+    def get_parser(self, env=None):
+        with WorkingDirectory(self.filepath):
+            if not os.path.isfile(self.definitions_file):
+                logger.error(
+                    'Argument definition file "{}" not found!'.format(
+                        self.definitions_file
+                    )
+                )
+                exit(1)
+            if env is None:
+                env = {}
+
+            json_data = load(self.definitions_file)
+
+            if 'modules' not in json_data:
+                return ArgumentParser(
+                    epilog='{} does not contain any modules'.format(
+                        self.definitions_file
+                    )
+                )
+            json_data = json_data['modules']
+            if self.module not in json_data:
+                return ArgumentParser(
+                    epilog='No entry for {} in {}'.format(
+                        self.module,
+                        self.definitions_file
+                    )
+                )
+            json_data = json_data[self.module]
+
+            if os.path.isfile(self.defaults_file):
+                defaults = load(self.defaults_file)
+                if self.module in defaults:
+                    defaults = defaults[self.module]
+                else:
+                    defaults = {}
+            else:
+                defaults = {}
+
+            return __build_parser__(
+                self.module,
+                json_data,
+                defaults=defaults,
+                env=env
+            )
+
+
+def load(json_file, mode='a'):
+    if mode in 'ar':
+        if os.path.isfile(json_file):
+            with open(json_file, 'r') as f:
+                return json.load(f)
+        elif mode == 'r':
+            raise FileNotFoundError('file could not be read: ' + json_file)
+    if mode in 'wca':
+        return {}
+    raise ValueError('Unknown file mode "{}"'.format(mode))
+
+
+def save(json_data, json_file):
+    with open(json_file, 'w') as f:
+        f.write(json.dumps(json_data, indent=2))
+
+
+def __split_any__(text, delimiters=[]):
+    parts = [text]
+    for delim in delimiters:
+        parts = [p for ps in parts for p in ps.split(delim)]
+    return parts
+
+
+def __parse_value__(value):
+    v = value.strip()
+    try:
+        if '.' in value:
+            return float(v)
+        else:
+            return int(v)
+    except ValueError:
+        if v.lower() == 'true':
+            return True
+        elif v.lower() == 'false':
+            return False
+        elif v.lower() in ['none', 'null']:
+            return None
+        elif v[0] in '\'"' and v[-1] in '\'"':
+            return v[1:-1]
+        else:
+            return v
 
 
 def __add_argument_to_parser__(parser, param, env={}):
@@ -343,73 +410,6 @@ def __build_parser__(name, definition, defaults={}, env={},
     return parser
 
 
-##
-#  @brief Builds an instance of argparse.ArgumentParser
-#  @param [in] module Name of module
-#  @param [in] [definitionsFile] Name of file containing argument definitions
-#  @param [in] [defaultsFile] Name of file containing argument defaults
-#  @return ArgumentParser
-#
-def __create_parser__(module, definitions_file=defaults.DEFINITIONS_FILE,
-                      defaults_file=defaults.DEFAULTS_FILE, env=None):
-    if not os.path.isfile(definitions_file):
-        logger.error(
-            'Argument definition file "{}" not found!'.format(
-                definitions_file
-            )
-        )
-        exit(1)
-    if env is None:
-        env = {}
-
-    json_data = load(definitions_file)
-
-    if 'modules' not in json_data:
-        return ArgumentParser(
-            epilog='{} does not contain any modules'.format(
-                definitions_file
-            )
-        )
-    json_data = json_data['modules']
-    if module not in json_data:
-        return ArgumentParser(
-            epilog='No entry for {} in {}'.format(
-                module,
-                definitions_file
-            )
-        )
-    json_data = json_data[module]
-
-    if os.path.isfile(defaults_file):
-        defaults = load(defaults_file)
-        if module in defaults:
-            defaults = defaults[module]
-        else:
-            defaults = {}
-    else:
-        defaults = {}
-
-    return __build_parser__(module, json_data, defaults=defaults, env=env)
-
-
 def get_module(filepath):
     __filename__ = os.path.splitext(filepath)[0]
     return os.path.basename(__filename__)
-
-
-def get_parser(
-    filepath,
-    definitions_file=defaults.DEFINITIONS_FILE,
-    defaults_file=defaults.DEFAULTS_FILE,
-    env=None
-):
-    if env is None:
-        env = {}
-    module = get_module(filepath)
-    with WorkingDirectory(filepath):
-        return __create_parser__(
-            module,
-            definitions_file,
-            defaults_file,
-            env=env
-        )
