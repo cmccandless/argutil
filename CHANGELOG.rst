@@ -1,7 +1,7 @@
 =========
 Changelog
 =========
-v1.0.8
+v1.1.0
 ------
-
+- API: abstract parser definition functionality behind class ParserDefinition
 - create CHANGELOG.rst
