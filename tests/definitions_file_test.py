@@ -81,18 +81,24 @@ class DefinitionsFileTest(unittest.TestCase):
             json_data = json.load(f)
         self.assertDictEqual(json_data, expected)
 
+
+class ParserDefinitionTest(unittest.TestCase):
+    def create_json_file(self, filename, json_data):
+        with open(filename, 'w') as f:
+            f.write(json.dumps(json_data))
+
     @tempdir()
-    def test_init_creates_script(self):
-        argutil.init('test_script')
+    def test_create_creates_script(self):
+        argutil.ParserDefinition.create('test_script.py')
         self.assertIs(os.path.isfile('test_script.py'), True)
 
     @tempdir()
-    def test_init_creates_definitions_file(self):
-        argutil.init('test_script')
+    def test_create_creates_definitions_file(self):
+        argutil.ParserDefinition.create('test_script.py')
         self.assertIs(os.path.isfile('commandline.json'), True)
 
     @tempdir()
-    def test_init_appends_to_existing_definitions_file(self):
+    def test_create_appends_to_existing_definitions_file(self):
         base_data = {
             'modules': {
                 'existing_module': {
@@ -102,7 +108,7 @@ class DefinitionsFileTest(unittest.TestCase):
             }
         }
         self.create_json_file(DEFINITIONS_FILE, base_data)
-        argutil.init('test_script', DEFINITIONS_FILE)
+        argutil.ParserDefinition.create('test_script.py', DEFINITIONS_FILE)
         expected = {
             'modules': {
                 'existing_module': {
@@ -119,7 +125,7 @@ class DefinitionsFileTest(unittest.TestCase):
 
     @tempdir()
     def test_init_definitions_file_contains_correct_structure(self):
-        argutil.init('test_script', DEFINITIONS_FILE)
+        argutil.ParserDefinition.create('test_script.py', DEFINITIONS_FILE)
         expected = {
             'modules': {
                 'test_script': {
@@ -134,7 +140,7 @@ class DefinitionsFileTest(unittest.TestCase):
     def test_init_error_on_bad_definitions_file(self):
         self.create_json_file(DEFINITIONS_FILE, {})
         with self.assertRaises(KeyError):
-            argutil.init('test_script', DEFINITIONS_FILE)
+            argutil.ParserDefinition.create('test_script.py', DEFINITIONS_FILE)
 
 
 if __name__ == '__main__':

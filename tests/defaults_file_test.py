@@ -11,6 +11,7 @@ sys.path.insert(
 )
 
 import argutil
+from argutil import ParserDefinition
 
 DEFAULTS_FILE = argutil.defaults.DEFAULTS_FILE
 
@@ -22,20 +23,21 @@ class DefaultsFileTest(unittest.TestCase):
     @tempdir()
     def test_set_defaults_creates_file_if_nonexistent(self):
         self.assertIs(os.path.isfile(DEFAULTS_FILE), False)
-        argutil.set_defaults('test_script', DEFAULTS_FILE)
+        ParserDefinition('test_script').set_defaults()
         self.assertIs(os.path.isfile(DEFAULTS_FILE), True)
 
     @tempdir()
     def test_get_defaults_nonexistent_defaults_file(self):
-        self.assertDictEqual(argutil.get_defaults('test_script'), {})
+        parser_def = ParserDefinition('test_script')
+        self.assertDictEqual(parser_def.get_defaults(), {})
 
     @tempdir()
     def test_get_defaults(self):
         expected = {}
-        module = 'test_script'
-        argutil.set_defaults(module, DEFAULTS_FILE)
+        parser_def = ParserDefinition('test_script.py')
+        parser_def.set_defaults()
         self.assertDictEqual(
-            argutil.get_defaults(module, DEFAULTS_FILE),
+            parser_def.get_defaults(),
             expected
         )
 
@@ -45,36 +47,36 @@ class DefaultsFileTest(unittest.TestCase):
             'foo': 'bar',
             'bar2': 'foo2'
         }
-        module = 'test_script'
-        argutil.set_defaults(module, DEFAULTS_FILE, foo='bar', bar2='foo2')
+        parser_def = ParserDefinition('test_script.py')
+        parser_def.set_defaults(foo='bar', bar2='foo2')
         self.assertDictEqual(
-            argutil.get_defaults(module, DEFAULTS_FILE),
+            parser_def.get_defaults(),
             expected
         )
 
     @tempdir()
     def test_get_defaults_nonexistent_module(self):
         expected = {}
-        argutil.set_defaults('test_script', foo='bar')
-        self.assertDictEqual(argutil.get_defaults('other_script'), expected)
+        parser_def = ParserDefinition('test_script.py')
+        parser_def.set_defaults(foo='bar')
+        parser_def2 = ParserDefinition('other_script.py')
+        self.assertDictEqual(parser_def2.get_defaults(), expected)
 
     @tempdir()
     def test_config_fetch_no_defaults(self):
-        module = 'test_script'
-        current = list(argutil.config(module, []))
+        parser_def = ParserDefinition('test_script.py')
+        current = parser_def.config()
         expected = []
         self.assertEqual(current, expected)
 
     @tempdir()
     def test_config_fetch_has_defaults(self):
-        module = 'test_script'
-        argutil.set_defaults(
-            module,
-            defaults_file=DEFAULTS_FILE,
+        parser_def = ParserDefinition('test_script.py')
+        parser_def.set_defaults(
             foo='bar',
             bar='foo'
         )
-        current = argutil.config(module)
+        current = parser_def.config()
         expected = [
             'foo=bar',
             'bar=foo'
@@ -83,19 +85,18 @@ class DefaultsFileTest(unittest.TestCase):
 
     @tempdir()
     def test_config_single_property(self):
-        module = 'test_script'
-        argutil.config(module, ['foo=bar'])
+        parser_def = ParserDefinition('test_script.py')
+        parser_def.config(['foo=bar'])
         expected = {'foo': 'bar'}
         self.assertDictEqual(
-            argutil.get_defaults(module, DEFAULTS_FILE),
+            parser_def.get_defaults(),
             expected
         )
 
     @tempdir()
     def test_config_multiple_properties(self):
-        module = 'test_script'
-        argutil.config(
-            module,
+        parser_def = ParserDefinition('test_script.py')
+        parser_def.config(
             [
                 "a=1",
                 "b='2'",
@@ -120,20 +121,19 @@ class DefaultsFileTest(unittest.TestCase):
             i=None
         )
         self.assertDictEqual(
-            argutil.get_defaults(module, DEFAULTS_FILE),
+            parser_def.get_defaults(),
             expected
         )
 
     @tempdir()
     def test_config_list_property(self):
-        module = 'test_script'
-        argutil.config(
-            module,
+        parser_def = ParserDefinition('test_script.py')
+        parser_def.config(
             ['foo=[1, "2", \'3\', true, false, none, null]']
         )
         expected = {'foo': [1, '2', '3', True, False, None, None]}
         self.assertDictEqual(
-            argutil.get_defaults(module, DEFAULTS_FILE),
+            parser_def.get_defaults(),
             expected
         )
 
