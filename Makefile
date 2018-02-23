@@ -11,7 +11,8 @@ test:
 	@rm -rf ./tmp
 
 report: lint test
-	coverage report -m 
+	@echo "coverage report"
+	@coverage report || (echo "FAIL: Test coverage threshold is too low" && exit 2)
 
 clean:
 	rm -rf dist/*
@@ -19,7 +20,7 @@ clean:
 clean-git:
 	git stash
 
-package: init clean-git lint test clean
+package: init clean-git report clean
 	python setup.py sdist
 
 publish: package

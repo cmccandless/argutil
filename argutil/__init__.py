@@ -9,5 +9,6 @@ from .argutil import (
     set_defaults,
     get_module,
     get_parser,
+    VERSION,
 ) 
 from .working_directory import WorkingDirectory, pushd
