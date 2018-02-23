@@ -23,8 +23,5 @@ clean-git:
 package: init clean-git report clean
 	python setup.py sdist
 
-tag:
-	git tag -a v$(python -c 'import argutil; print(argutil.VERSION)') -F CHANGELOG.rst
-
 publish: package
 	twine upload dist/*
