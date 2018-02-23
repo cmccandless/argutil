@@ -10,8 +10,8 @@ parsers
    :target: https://travis-ci.org/cmccandless/argutil
 .. |Coverage Status| image:: https://coveralls.io/repos/github/cmccandless/argutil/badge.svg?branch=master
    :target: https://coveralls.io/github/cmccandless/argutil?branch=master&service=github
-.. |PyPI| image:: https://img.shields.io/pypi/v/nine.svg
-   :target: https://pypi.org/project/argutil/
+.. |PyPI| image:: https://badge.fury.io/py/argutil.svg
+    :target: https://badge.fury.io/py/argutil
 .. |Updates| image:: https://pyup.io/repos/github/cmccandless/argutil/shield.svg
    :target: https://pyup.io/repos/github/cmccandless/argutil/
 .. |Python 3| image:: https://pyup.io/repos/github/cmccandless/argutil/python-3-shield.svg
