@@ -13,6 +13,8 @@ sys.path.insert(
 
 import argutil
 
+WD = os.path.abspath(os.path.join('.', 'tmp'))
+
 
 @contextmanager
 def TempWorkingDirectory(dir=None, cleanup=True):

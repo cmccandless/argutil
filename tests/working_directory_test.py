@@ -1,6 +1,5 @@
 import unittest
-import tempfile
-import shutil
+from .helper import WD
 import os
 import sys
 sys.path.insert(
@@ -15,25 +14,17 @@ from argutil import WorkingDirectory, pushd
 
 
 class WorkingDirectoryTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.wd = tempfile.mkdtemp()
-
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls.wd)
-
     def test_cwd_is_changed(self):
         filename = 'dirpath.txt'
-        with open(os.path.join(WorkingDirectoryTest.wd, filename), 'w') as f:
+        with open(os.path.join(WD, filename), 'w') as f:
             f.write('it works!')
-        with WorkingDirectory(WorkingDirectoryTest.wd):
+        with WorkingDirectory(WD):
             with open(filename) as f:
                 self.assertEqual(f.read(), 'it works!')
 
     def test_cwd_set_to_parent_of_file(self):
         filename = 'filepath.txt'
-        filepath = os.path.join(WorkingDirectoryTest.wd, filename)
+        filepath = os.path.join(WD, filename)
         with open(filepath, 'w') as f:
             f.write('filepaths work!')
         with WorkingDirectory(filepath):
@@ -42,10 +33,10 @@ class WorkingDirectoryTest(unittest.TestCase):
 
     def test_pushd(self):
         filename = 'pushd.txt'
-        with open(os.path.join(WorkingDirectoryTest.wd, filename), 'w') as f:
+        with open(os.path.join(WD, filename), 'w') as f:
             f.write('pushd works!')
 
-        @pushd(WorkingDirectoryTest.wd)
+        @pushd(WD)
         def in_wd():
             with open(filename) as f:
                 self.assertEqual(f.read(), 'pushd works!')

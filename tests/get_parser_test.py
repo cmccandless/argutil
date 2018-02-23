@@ -1,7 +1,5 @@
 import unittest
-import shutil
-import tempfile
-from .helper import tempdir
+from .helper import WD, tempdir
 import os
 import sys
 sys.path.insert(
@@ -35,13 +33,12 @@ class GetParserTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.wd = tempfile.mkdtemp()
         cls.filepath = 'test_script.py'
         cls.module = argutil.get_module(cls.filepath)
         cls.env = {
             'l_str': lambda s: str(s).lower(),
         }
-        with argutil.WorkingDirectory(cls.wd):
+        with argutil.WorkingDirectory(WD):
             def add_arg(name, **kwargs):
                 return argutil.add_argument(cls.module, name, **kwargs)
             argutil.init(cls.module)
@@ -62,20 +59,8 @@ class GetParserTest(unittest.TestCase):
             )
             cls.parser = argutil.get_parser(cls.filepath, env=cls.env)
 
-    @classmethod
-    def tearDownClass(cls):
-        # Try to clean up, but allowed to fail.
-        # Since a temporary directory is used, it will be cleared
-        # on next system reboot
-        try:
-            shutil.rmtree(cls.wd)
-        except PermissionError:
-            pass
-        except FileNotFoundError:
-            pass
-
     def get_opts(self, *args):
-        with argutil.WorkingDirectory(GetParserTest.wd):
+        with argutil.WorkingDirectory(WD):
             return GetParserTest.parser.parse_args(args)
 
     def test_positional(self):
@@ -131,7 +116,7 @@ class GetParserTest(unittest.TestCase):
             'abc'
         )
 
-    @tempdir()
+    @tempdir(WD)
     def test_error_unknown_type(self):
         filename = 'bad_module.py'
         module = argutil.get_module(filename)
@@ -140,7 +125,7 @@ class GetParserTest(unittest.TestCase):
         with self.assertRaises(KeyError):
             argutil.get_parser(filename, env={})
 
-    @tempdir()
+    @tempdir(WD)
     def test_error_missing_long_key(self):
         filename = 'bad_module.py'
         module = argutil.get_module(filename)

@@ -1,7 +1,5 @@
 import unittest
-from .helper import TempWorkingDirectory
-import tempfile
-import shutil
+from .helper import WD, TempWorkingDirectory
 from contextlib import contextmanager
 import os
 import sys
@@ -17,38 +15,11 @@ import argutil
 
 DEFINITIONS_FILE = argutil.defaults.DEFINITIONS_FILE
 
-try:
-    PermissionError
-except NameError:
-    class PermissionError(Exception):
-        pass
-
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = IOError
-
 
 class ModuleCreationTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.wd = tempfile.mkdtemp()
-
-    @classmethod
-    def tearDownClass(cls):
-        # Try to clean up, but allowed to fail.
-        # Since a temporary directory is used, it will be cleared
-        # on next system reboot
-        try:
-            shutil.rmtree(cls.wd)
-        except PermissionError:
-            pass
-        except FileNotFoundError:
-            pass
-
     @contextmanager
     def assertModifiedModule(self, expected=None, module='test_script'):
-        with TempWorkingDirectory(ModuleCreationTest.wd, False):
+        with TempWorkingDirectory(WD, False):
             argutil.init(module)
             yield module
             self.assertDictEqual(argutil.load(DEFINITIONS_FILE), expected)

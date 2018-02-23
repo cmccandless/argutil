@@ -6,7 +6,9 @@ lint:
 	flake8
 
 test:
+	@mkdir ./tmp || rm -rf ./tmp/*
 	coverage run -m pytest -v
+	@rm -rf ./tmp
 
 report: lint test
 	coverage report -m 
