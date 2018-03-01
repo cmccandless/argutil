@@ -19,7 +19,7 @@ from .deepcopy import deepcopy
 from .primitives import primitives
 import logging
 
-VERSION = '1.1.2'
+VERSION = '1.1.3'
 
 logger = logging.getLogger('argutil')
 logger.setLevel(logging.ERROR)
@@ -373,7 +373,7 @@ def __build_parser__(name, definition, defaults=None, env=None,
             parser.set_defaults(func=env[name])
         else:
             def usage(*args, **kwargs):
-                parser.parse_args([*parents, name, '-h'])
+                parser.parse_args(parents + [name, '-h'])
             parser.set_defaults(func=usage)
     if 'args' in definition:
         for param in definition['args']:
@@ -431,7 +431,7 @@ def __build_parser__(name, definition, defaults=None, env=None,
                 env,
                 subparsers,
                 templates,
-                [*parents, name]
+                parents + [name]
             )
 
     return parser

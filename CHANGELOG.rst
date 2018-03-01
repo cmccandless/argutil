@@ -1,6 +1,6 @@
 Changelog
 =========
-v1.1.2
+v1.1.3
 ------
 - Fix load/save within ParserDefinition
 - Fix get/set defaults for submodules
