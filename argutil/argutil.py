@@ -413,3 +413,12 @@ def __build_parser__(name, definition, defaults={}, env={},
 def get_module(filepath):
     __filename__ = os.path.splitext(filepath)[0]
     return os.path.basename(__filename__)
+
+
+def get_parser(
+    filepath,
+    env=None,
+    definitions_file=defaults.DEFINITIONS_FILE,
+    defaults_file=defaults.DEFAULTS_FILE
+):
+    return ParserDefinition(filepath).get_parser(env)
