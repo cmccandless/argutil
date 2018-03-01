@@ -11,13 +11,15 @@ from argparse import (
 from .working_directory import WorkingDirectory
 from . import defaults
 import json
+import inspect
 import os
 import shutil
 from sys import exit
 from .deepcopy import deepcopy
+from .primitives import primitives
 import logging
 
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 
 logger = logging.getLogger('argutil')
 logger.setLevel(logging.ERROR)
@@ -28,44 +30,6 @@ except NameError:
     FileNotFoundError = IOError
 
 
-primitives = {
-    'int': int,
-    'float': float,
-    'complex': complex,
-    'str': str,
-    'list': list,
-    'tuple': tuple,
-    'bytes': bytes,
-    'memoryview': memoryview,
-    'bytearray': bytearray,
-    'range': range,
-    'set': set,
-    'frozenset': frozenset,
-    'dict': dict,
-}
-
-# Python 2 compatibility
-try:
-    primitives['long'] = long
-except NameError:
-    pass
-
-try:
-    primitives['unicode'] = unicode
-except NameError:
-    pass
-
-try:
-    primitives['buffer'] = buffer
-except NameError:
-    pass
-
-try:
-    primitives['xrange'] = xrange
-except NameError:
-    primitives['xrange'] = range
-
-
 class RawWithDefaultsFormatter(
     RawTextHelpFormatter,
     ArgumentDefaultsHelpFormatter
@@ -73,14 +37,24 @@ class RawWithDefaultsFormatter(
     pass
 
 
+def get_file(**kwargs):
+    stackdepth = kwargs.get('__stackdepth__', kwargs.get('__stackdepth__', 1))
+    return inspect.stack()[stackdepth].filename
+
+
 class ParserDefinition(object):
     @staticmethod
     def create(
-        filepath,
+        filepath=None,
         definitions_file=defaults.DEFINITIONS_FILE,
         defaults_file=defaults.DEFAULTS_FILE,
         fail_if_exists=False,
+        **kwargs
     ):
+        if filepath is None:
+            filepath = get_file(
+                __stackdepth__=kwargs.get('_-stackdepth__', 1) + 1
+            )
         module = get_module(filepath)
         if not os.path.isfile(filepath):
             argutil_path = os.path.abspath(__file__)
@@ -104,10 +78,15 @@ class ParserDefinition(object):
 
     def __init__(
         self,
-        filepath,
+        filepath=None,
         definitions_file=defaults.DEFINITIONS_FILE,
-        defaults_file=defaults.DEFAULTS_FILE
+        defaults_file=defaults.DEFAULTS_FILE,
+        **kwargs
     ):
+        if filepath is None:
+            filepath = get_file(
+                __stackdepth__=kwargs.get('__stackdepth__', 1) + 1
+            )
         self.filepath = filepath
         self.module = get_module(filepath)
         self.definitions_file = definitions_file
@@ -413,3 +392,18 @@ def __build_parser__(name, definition, defaults={}, env={},
 def get_module(filepath):
     __filename__ = os.path.splitext(filepath)[0]
     return os.path.basename(__filename__)
+
+
+def get_parser(
+    filepath=None,
+    env=None,
+    definitions_file=defaults.DEFINITIONS_FILE,
+    defaults_file=defaults.DEFAULTS_FILE,
+    **kwargs
+):
+    return ParserDefinition(
+        filepath,
+        definitions_file,
+        defaults_file,
+        __stackdepth__=kwargs.get('__stackdepth__', 1) + 1
+    ).get_parser(env)

@@ -1,0 +1,2 @@
+#!/bin/sh
+grep -oP "(?<=VERSION = ['\"])\d+\.\d+\.\d+" argutil/argutil.py

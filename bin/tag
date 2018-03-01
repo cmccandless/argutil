@@ -1,0 +1,2 @@
+#!/bin/sh
+git tag -a v$(bin/get_version) -F CHANGELOG.rst

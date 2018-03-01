@@ -63,7 +63,6 @@ env = {
     'this': this,
     'that': that
 }
-parser_def = argutil.ParserDefinition(__file__)
-parser = parser_def.get_parser(env)
+parser = argutil.get_parser(env=env)
 opts = parser.parse_args()
 opts.func(opts)
