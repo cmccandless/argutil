@@ -19,7 +19,7 @@ from .deepcopy import deepcopy
 from .primitives import primitives
 import logging
 
-VERSION = '1.1.1'
+VERSION = '1.1.2'
 
 logger = logging.getLogger('argutil')
 logger.setLevel(logging.ERROR)
@@ -48,13 +48,15 @@ class ParserDefinition(object):
         filepath=None,
         definitions_file=defaults.DEFINITIONS_FILE,
         defaults_file=defaults.DEFAULTS_FILE,
-        fail_if_exists=False,
+        fail_if_exists=True,
         **kwargs
     ):
         if filepath is None:
             filepath = get_file(
                 __stackdepth__=kwargs.get('_-stackdepth__', 1) + 1
             )
+        else:
+            filepath = os.path.abspath(filepath)
         module = get_module(filepath)
         if not os.path.isfile(filepath):
             argutil_path = os.path.abspath(__file__)
@@ -68,7 +70,7 @@ class ParserDefinition(object):
             raise KeyError(
                 '{} does not contain key "modules"'.format(definitions_file)
             )
-        if module in json_data:
+        if module in json_data['modules']:
             if fail_if_exists:
                 raise KeyError('module already defined')
         else:
@@ -87,10 +89,20 @@ class ParserDefinition(object):
             filepath = get_file(
                 __stackdepth__=kwargs.get('__stackdepth__', 1) + 1
             )
+        else:
+            filepath = os.path.abspath(filepath)
         self.filepath = filepath
         self.module = get_module(filepath)
         self.definitions_file = definitions_file
         self.defaults_file = defaults_file
+
+    def load(self, json_file, mode='a'):
+        with WorkingDirectory(self.filepath):
+            return load(json_file, mode)
+
+    def save(self, json_data, json_file):
+        with WorkingDirectory(self.filepath):
+            return save(json_data, json_file)
 
     def add_example(
         self,
@@ -101,13 +113,13 @@ class ParserDefinition(object):
             raise ValueError('usage must be a string!')
         if not isinstance(description, str):
             raise ValueError('description must be a string!')
-        json_data = load(self.definitions_file)
+        json_data = self.load(self.definitions_file)
         example = {
             'usage': usage,
             'description': description
         }
         json_data['modules'][self.module]['examples'].append(example)
-        save(json_data, self.definitions_file)
+        self.save(json_data, self.definitions_file)
 
     def add_argument(
         self,
@@ -115,7 +127,7 @@ class ParserDefinition(object):
         short=None,
         **kwargs
     ):
-        json_data = load(self.definitions_file)
+        json_data = self.load(self.definitions_file)
         arg = {}
         if short is not None:
             arg['short'] = short
@@ -144,19 +156,27 @@ class ParserDefinition(object):
         arg['help'] = help
 
         json_data['modules'][self.module]['args'].append(arg)
-        save(json_data, self.definitions_file)
+        self.save(json_data, self.definitions_file)
 
     def set_defaults(self, **kwargs):
-        json_data = load(self.defaults_file)
+        json_data = self.load(self.defaults_file)
         if self.module not in json_data:
             json_data[self.module] = {}
         module = json_data[self.module]
         for k, v in kwargs.items():
-            module[k] = v
-        save(json_data, self.defaults_file)
+            m = module
+            k_parts = k.split('.')
+            k = k_parts.pop()
+            while k_parts:
+                k_parent = k_parts.pop(0)
+                if k_parent not in m:
+                    m[k_parent] = {}
+                m = m[k_parent]
+            m[k] = v
+        self.save(json_data, self.defaults_file)
 
     def get_defaults(self):
-        json_data = load(self.defaults_file)
+        json_data = self.load(self.defaults_file)
         return json_data.get(self.module, {})
 
     def config(self, configs=None):
@@ -171,7 +191,17 @@ class ParserDefinition(object):
             self.set_defaults(**defaults)
         else:
             defaults = self.get_defaults()
-            return ['{}={}'.format(*t) for t in defaults.items()]
+            items = list(defaults.items())
+            configs = []
+            while items:
+                k, v = items.pop(0)
+                if isinstance(v, dict):
+                    for k2, v2 in v.items():
+                        k2 = '.'.join((k, k2))
+                        items.append((k2, v2))
+                else:
+                    configs.append('{}={}'.format(k, v))
+            return configs
 
     def get_parser(self, env=None):
         with WorkingDirectory(self.filepath):
@@ -237,7 +267,9 @@ def save(json_data, json_file):
         f.write(json.dumps(json_data, indent=2))
 
 
-def __split_any__(text, delimiters=[]):
+def __split_any__(text, delimiters=None):
+    if delimiters is None:
+        delimiters = []
     parts = [text]
     for delim in delimiters:
         parts = [p for ps in parts for p in ps.split(delim)]
@@ -264,7 +296,9 @@ def __parse_value__(value):
             return v
 
 
-def __add_argument_to_parser__(parser, param, env={}):
+def __add_argument_to_parser__(parser, param, env=None):
+    if env is None:
+        env = {}
     param = dict(param)
     if 'help' in param:
         if param['help'] is None:
@@ -300,8 +334,17 @@ def __add_example_to_parser__(parserArgs, example):
     parserArgs['epilog'] += '\n    {:<44}{}'.format(*(example.values()))
 
 
-def __build_parser__(name, definition, defaults={}, env={},
-                     subparsers=None, templates={}):
+def __build_parser__(name, definition, defaults=None, env=None,
+                     subparsers=None, templates=None, parents=None):
+    if defaults is None:
+        defaults = {}
+    if env is None:
+        env = {}
+    if templates is None:
+        templates = {}
+    if parents is None:
+        parents = []
+
     parserArgs = dict(prog=name, formatter_class=RawWithDefaultsFormatter)
 
     if 'template' in definition:
@@ -328,6 +371,10 @@ def __build_parser__(name, definition, defaults={}, env={},
         parser = subparsers.add_parser(name, **parserArgs)
         if name in env:
             parser.set_defaults(func=env[name])
+        else:
+            def usage(*args, **kwargs):
+                parser.parse_args([*parents, name, '-h'])
+            parser.set_defaults(func=usage)
     if 'args' in definition:
         for param in definition['args']:
             __add_argument_to_parser__(parser, param, env)
@@ -372,18 +419,19 @@ def __build_parser__(name, definition, defaults={}, env={},
 
     if 'modules' in definition:
         subparsers = parser.add_subparsers(dest='command')
-        for name, submodule in definition['modules'].items():
-            if name in defaults:
-                sub_defaults = defaults[name]
+        for submodule_name, submodule in definition['modules'].items():
+            if submodule_name in defaults:
+                sub_defaults = defaults[submodule_name]
             else:
                 sub_defaults = {}
             __build_parser__(
-                name,
+                submodule_name,
                 submodule,
                 sub_defaults,
                 env,
                 subparsers,
-                templates
+                templates,
+                [*parents, name]
             )
 
     return parser

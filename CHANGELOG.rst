@@ -1,5 +1,11 @@
 Changelog
 =========
+v1.1.2
+------
+- Fix load/save within ParserDefinition
+- Fix get/set defaults for submodules
+- Add default func for submodules
+
 v1.1.1
 ------
 - ParserDefinition.__init__() and get_parser() no longer require an explicit filepath
