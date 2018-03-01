@@ -18,8 +18,7 @@ examples:
 from __future__ import print_function
 import argutil
 
-parser_def = argutil.ParserDefinition(__file__)
-argparser = parser_def.get_parser()
+argparser = argutil.get_parser()
 opts = argparser.parse_args()
 print('foo:', opts.foo)
 print('bar:', opts.bar)
