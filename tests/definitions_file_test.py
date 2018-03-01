@@ -89,6 +89,18 @@ class ParserDefinitionTest(unittest.TestCase):
         self.assertIs(os.path.isfile('commandline.json'), True)
 
     @tempdir()
+    def test_create_error_existing_module(self):
+        filename = 'test_script.py'
+        argutil.ParserDefinition.create(filename)
+        with self.assertRaises(KeyError):
+            argutil.ParserDefinition.create(filename)
+
+    @tempdir()
+    def test_init_nonexistent_module(self):
+        with self.assertRaises(SystemExit):
+            argutil.ParserDefinition('test_script.py').get_parser()
+
+    @tempdir()
     def test_create_appends_to_existing_definitions_file(self):
         base_data = {
             'modules': {

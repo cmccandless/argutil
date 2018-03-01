@@ -4,12 +4,15 @@ from contextlib import contextmanager
 
 @contextmanager
 def WorkingDirectory(dir):
-    if os.path.isfile(dir):
+    if not os.path.isdir(dir):
         dir = os.path.dirname(os.path.abspath(dir))
     cwd = os.getcwd()
-    os.chdir(dir)
-    yield
-    os.chdir(cwd)
+    if cwd != dir:
+        os.chdir(dir)
+        yield
+        os.chdir(cwd)
+    else:
+        yield
 
 
 def pushd(path):
