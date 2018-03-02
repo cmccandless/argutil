@@ -19,7 +19,7 @@ from .deepcopy import deepcopy
 from .primitives import primitives
 import logging
 
-VERSION = '1.1.3'
+VERSION = '1.1.4'
 
 logger = logging.getLogger('argutil')
 logger.setLevel(logging.ERROR)

@@ -1,5 +1,10 @@
 Changelog
 =========
+v1.1.4
+------
+- Add ParserDefinition.callable() decorator to replace env parameter in get_parser
+- bool added to primitive types
+
 v1.1.3
 ------
 - Fix load/save within ParserDefinition
