@@ -42,6 +42,16 @@ def get_file(**kwargs):
     return inspect.stack()[stackdepth].filename
 
 
+GLOBAL_ENV = {}
+
+
+def callable(name=None):
+    def decorator(function):
+        GLOBAL_ENV[name or function.__name__] = function
+        return function
+    return decorator
+
+
 class ParserDefinition(object):
     @staticmethod
     def create(
@@ -250,6 +260,8 @@ class ParserDefinition(object):
             else:
                 defaults = {}
             env = dict(env)
+            for k, v in GLOBAL_ENV.items():
+                env[k] = v
             for k, v in self.env.items():
                 env[k] = v
 

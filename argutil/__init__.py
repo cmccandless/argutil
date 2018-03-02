@@ -3,6 +3,7 @@ from .argutil import (
     save,
     get_module,
     get_parser,
+    callable,
     ParserDefinition,
     VERSION,
 ) 
