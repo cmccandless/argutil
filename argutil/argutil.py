@@ -83,6 +83,7 @@ class ParserDefinition(object):
         filepath=None,
         definitions_file=defaults.DEFINITIONS_FILE,
         defaults_file=defaults.DEFAULTS_FILE,
+        env=None,
         **kwargs
     ):
         if filepath is None:
@@ -95,6 +96,13 @@ class ParserDefinition(object):
         self.module = get_module(filepath)
         self.definitions_file = definitions_file
         self.defaults_file = defaults_file
+        self.env = env or {}
+
+    def callable(self, name=None):
+        def decorator(function):
+            self.env[name or function.__name__] = function
+            return function
+        return decorator
 
     def load(self, json_file, mode='a'):
         with WorkingDirectory(self.filepath):
@@ -165,13 +173,13 @@ class ParserDefinition(object):
         module = json_data[self.module]
         for k, v in kwargs.items():
             m = module
-            k_parts = k.split('.')
-            k = k_parts.pop()
-            while k_parts:
-                k_parent = k_parts.pop(0)
+            while k not in m and '.' in k:
+                index = k.index('.')
+                k_parent = k[:index]
                 if k_parent not in m:
                     m[k_parent] = {}
                 m = m[k_parent]
+                k = k[index + 1:]
             m[k] = v
         self.save(json_data, self.defaults_file)
 
@@ -241,6 +249,9 @@ class ParserDefinition(object):
                     defaults = {}
             else:
                 defaults = {}
+            env = dict(env)
+            for k, v in self.env.items():
+                env[k] = v
 
             return __build_parser__(
                 self.module,
