@@ -1,4 +1,5 @@
 primitives = {
+    'bool': bool,
     'int': int,
     'float': float,
     'complex': complex,
