@@ -20,8 +20,6 @@ from .primitives import primitives
 import logging
 import jsonschema
 
-VERSION = '1.1.5'
-
 logger = logging.getLogger('argutil')
 logger.setLevel(logging.ERROR)
 
@@ -228,17 +226,17 @@ class ParserDefinition(object):
 
     def config(self, configs=None):
         if configs:
-            defaults = {}
+            module_defaults = {}
             for k, v in [__split_any__(kv, '=:') for kv in configs]:
                 if v[0] == '[' and v[-1] == ']':
                     v = [__parse_value__(s) for s in v[1:-1].split(',')]
                 else:
                     v = __parse_value__(v)
-                defaults[k] = v
-            self.set_defaults(**defaults)
+                module_defaults[k] = v
+            self.set_defaults(**module_defaults)
         else:
-            defaults = self.get_defaults()
-            items = list(defaults.items())
+            module_defaults = self.get_defaults()
+            items = list(module_defaults.items())
             configs = []
             while items:
                 k, v = items.pop(0)
@@ -272,13 +270,13 @@ class ParserDefinition(object):
         json_data = json_data[self.module]
 
         if os.path.isfile(self.defaults_file):
-            defaults = load(self.defaults_file)
-            if self.module in defaults:
-                defaults = defaults[self.module]
+            module_defaults = load(self.defaults_file)
+            if self.module in module_defaults:
+                module_defaults = module_defaults[self.module]
             else:
-                defaults = {}
+                module_defaults = {}
         else:
-            defaults = {}
+            module_defaults = {}
         env = dict(env)
         for k, v in GLOBAL_ENV.items():
             env[k] = v
@@ -288,7 +286,7 @@ class ParserDefinition(object):
         return __build_parser__(
             self.module,
             json_data,
-            defaults=defaults,
+            module_defaults=module_defaults,
             env=env
         )
 
@@ -354,7 +352,7 @@ def __add_example_to_parser__(parserArgs, example):
     parserArgs['epilog'] += '\n    {:<44}{}'.format(*(example.values()))
 
 
-def __build_parser__(name, definition, defaults, env,
+def __build_parser__(name, definition, module_defaults, env,
                      subparsers=None, templates=None, parents=None):
     if templates is None:
         templates = {}
@@ -402,12 +400,12 @@ def __build_parser__(name, definition, defaults, env,
                 __add_argument_to_parser__(parser, param, env)
 
     # Apply default values
-    for k, v in defaults.items():
+    for k, v in module_defaults.items():
         try:
-            defaults[k] = v.format(**env)
+            module_defaults[k] = v.format(**env)
         except AttributeError:
             continue
-    parser.set_defaults(**defaults)
+    parser.set_defaults(**module_defaults)
 
     if 'templates' in definition:
         templates = dict(templates)
@@ -437,8 +435,8 @@ def __build_parser__(name, definition, defaults, env,
     if 'modules' in definition:
         subparsers = parser.add_subparsers(dest='command')
         for submodule_name, submodule in definition['modules'].items():
-            if submodule_name in defaults:
-                sub_defaults = defaults[submodule_name]
+            if submodule_name in module_defaults:
+                sub_defaults = module_defaults[submodule_name]
             else:
                 sub_defaults = {}
             __build_parser__(

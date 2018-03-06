@@ -1,2 +1,2 @@
 #!/bin/sh
-grep -oP "(?<=VERSION = ['\"])\d+\.\d+\.\d+" argutil/argutil.py
+grep -oP "(?<=version = )\d+\.\d+\.\d+" setup.cfg
