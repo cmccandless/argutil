@@ -14,7 +14,6 @@ import json
 import inspect
 import os
 import shutil
-import sys
 from sys import exit
 from .deepcopy import deepcopy
 from .primitives import primitives
@@ -380,9 +379,7 @@ def __build_parser__(name, definition, module_defaults, env,
     if subparsers is None:
         parser = ArgumentParser(**parserArgs)
     else:
-        valid_kwargs = ['help']
-        if sys.version_info[0] >= 3:
-            valid_kwargs.append('aliases')
+        valid_kwargs = ['help', 'aliases']
         for k in valid_kwargs:
             if k in definition:
                 parserArgs[k] = definition[k]

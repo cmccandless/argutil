@@ -3,6 +3,7 @@ from .helper import tempdir, record_stdout
 from argutil import callable, get_parser, ParserDefinition
 from argutil.defaults import DEFINITIONS_FILE
 import json
+import sys
 
 
 class SubmoduleTest(unittest.TestCase):
@@ -21,6 +22,8 @@ class SubmoduleTest(unittest.TestCase):
 
     @tempdir()
     def test_submodule_aliases(self):
+        if sys.version_info[0] < 3:
+            self.skipTest('feature not available in Python2')
         json_data = {
             'modules': {
                 'root': {
