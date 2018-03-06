@@ -2,6 +2,7 @@ import unittest
 from .helper import WD, TempWorkingDirectory
 from contextlib import contextmanager
 import argutil
+from jsonschema import ValidationError
 
 DEFINITIONS_FILE = argutil.defaults.DEFINITIONS_FILE
 
@@ -32,12 +33,12 @@ class ModuleCreationTest(unittest.TestCase):
             parser_def.add_example('usage text', 'description text')
 
     def test_add_example_error_usage_not_str(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValidationError):
             with self.assertModifiedModule() as parser_def:
                 parser_def.add_example(123)
 
     def test_add_example_error_description_not_str(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValidationError):
             with self.assertModifiedModule() as parser_def:
                 parser_def.add_example('usage text', ['description'])
 

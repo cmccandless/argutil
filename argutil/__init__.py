@@ -5,6 +5,7 @@ from .argutil import (
     get_parser,
     callable,
     ParserDefinition,
+    GLOBAL_ENV,
     VERSION,
 ) 
 from .working_directory import WorkingDirectory, pushd

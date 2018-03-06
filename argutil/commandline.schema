@@ -1,0 +1,103 @@
+{
+    "definitions": {
+        "example": {
+            "type": "object",
+            "properties": {
+                "usage": {"type": "string"},
+                "description": {"type": "string"}
+            }
+        },
+        "arg": {
+            "type": "object",
+            "description": "Properties map to parameters in argparse.ArgumentParser.add_argument, with the following exceptions: long -> name, (short, long) -> flags",
+            "properties": {
+                "long": { "type": "string" },
+                "short": { "type": "string" },
+                "action": { "type": "string" },
+                "nargs": { "type": "string" },
+                "const": { "type": "string" },
+                "default": {},
+                "type": { "type": "string" },
+                "choices": { 
+                    "type": "array",
+                    "items": { "type": "string" }
+                },
+                "required": { "type": "boolean" },
+                "help": {
+                    "oneOf": [
+                        {
+                            "type": "array",
+                            "items": { "type": "string" }
+                        },
+                        { "type": "string" },
+                        { "type": "null"}
+                    ]
+                },
+                "metavar": { "type": "string" },
+                "dest": { "type": "string" }
+            },
+            "required": ["long"]
+        },
+        "module": {
+            "type": "object",
+            "properties": {
+                "examples": {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/example" }
+                },
+                "args": {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/arg" }
+                },
+                "templates": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^.*$": {
+                            "allOf": [
+                                { "$ref": "#/definitions/module" },
+                                {
+                                    "properties":{
+                                        "parent": { "type": "string" }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "modules": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^.*$": {
+                            "allOf": [
+                                { "$ref": "#/definitions/module" },
+                                {
+                                    "properties": {
+                                        "template": { "type": "string" },
+                                        "aliases": {
+                                            "type": "array",
+                                            "items": { "type": "string" }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "type": "object",
+    "properties": {
+        "modules": {
+            "type": "object",
+            "patternProperties": { 
+                "^.*$": {
+                    "allOf": [
+                        {"$ref": "#/definitions/module" }
+                    ]
+                }
+            }
+        }
+    },
+    "required": ["modules"]
+}
