@@ -55,7 +55,7 @@ class GetParserTest(unittest.TestCase):
                 'test --flag', 'positional w/ optional flag'
             )
             parser_def.set_defaults(default_from_file=123)
-            cls.parser = parser_def.get_parser(cls.env)
+            cls.parser = parser_def.get_parser(env=cls.env)
 
     def get_opts(self, *args):
         with argutil.WorkingDirectory(WD):

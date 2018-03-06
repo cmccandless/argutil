@@ -14,6 +14,7 @@ import json
 import inspect
 import os
 import shutil
+import sys
 from sys import exit
 from .deepcopy import deepcopy
 from .primitives import primitives
@@ -349,7 +350,7 @@ def __add_argument_to_parser__(parser, param, env):
 def __add_example_to_parser__(parserArgs, example):
     if 'epilog' not in parserArgs:
         parserArgs['epilog'] = 'examples:'
-    parserArgs['epilog'] += '\n    {:<44}{}'.format(*(example.values()))
+    parserArgs['epilog'] += '\n    {usage:<44}{description}'.format(**example)
 
 
 def __build_parser__(name, definition, module_defaults, env,
@@ -379,7 +380,10 @@ def __build_parser__(name, definition, module_defaults, env,
     if subparsers is None:
         parser = ArgumentParser(**parserArgs)
     else:
-        for k in ['help', 'aliases']:
+        valid_kwargs = ['help']
+        if sys.version_info[0] >= 3:
+            valid_kwargs.append('aliases')
+        for k in valid_kwargs:
             if k in definition:
                 parserArgs[k] = definition[k]
         parser = subparsers.add_parser(name, **parserArgs)
@@ -412,9 +416,9 @@ def __build_parser__(name, definition, module_defaults, env,
         for k, v in definition['templates'].items():
             if 'parent' in v:
                 parent_name = v['parent']
-                if parent_name not in templates:
+                if parent_name not in definition['templates']:
                     raise KeyError('unknown parent template ' + parent_name)
-                new_v = deepcopy(templates[parent_name])
+                new_v = deepcopy(definition['templates'][parent_name])
                 for k2, v2 in v.items():
                     if k2 not in new_v:
                         new_v[k2] = []
