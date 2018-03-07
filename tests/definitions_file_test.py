@@ -3,6 +3,8 @@ from .helper import tempdir
 import json
 import os
 import argutil
+from argutil import ParserDefinition
+from jsonschema import ValidationError
 
 
 try:
@@ -93,12 +95,12 @@ class ParserDefinitionTest(unittest.TestCase):
         filename = 'test_script.py'
         argutil.ParserDefinition.create(filename)
         with self.assertRaises(KeyError):
-            argutil.ParserDefinition.create(filename)
+            ParserDefinition.create(filename)
 
     @tempdir()
     def test_init_nonexistent_module(self):
         with self.assertRaises(SystemExit):
-            argutil.ParserDefinition('test_script.py').get_parser()
+            ParserDefinition('test_script.py').get_parser()
 
     @tempdir()
     def test_create_appends_to_existing_definitions_file(self):
@@ -111,7 +113,7 @@ class ParserDefinitionTest(unittest.TestCase):
             }
         }
         self.create_json_file(DEFINITIONS_FILE, base_data)
-        argutil.ParserDefinition.create('test_script.py', DEFINITIONS_FILE)
+        ParserDefinition.create('test_script.py', DEFINITIONS_FILE)
         expected = {
             'modules': {
                 'existing_module': {
@@ -128,7 +130,7 @@ class ParserDefinitionTest(unittest.TestCase):
 
     @tempdir()
     def test_init_definitions_file_contains_correct_structure(self):
-        argutil.ParserDefinition.create('test_script.py', DEFINITIONS_FILE)
+        ParserDefinition.create('test_script.py', DEFINITIONS_FILE)
         expected = {
             'modules': {
                 'test_script': {
@@ -142,8 +144,28 @@ class ParserDefinitionTest(unittest.TestCase):
     @tempdir()
     def test_init_error_on_bad_definitions_file(self):
         self.create_json_file(DEFINITIONS_FILE, {})
-        with self.assertRaises(KeyError):
-            argutil.ParserDefinition.create('test_script.py', DEFINITIONS_FILE)
+        with self.assertRaises(ValidationError):
+            ParserDefinition.create('test_script.py', DEFINITIONS_FILE)
+
+    @tempdir()
+    def test_delete_removes_definition(self):
+        parser_def = ParserDefinition.create('test_script.py')
+        json_data = argutil.load(parser_def.definitions_file)
+        self.assertIn(parser_def.module, json_data['modules'])
+        parser_def.delete()
+        json_data = argutil.load(parser_def.definitions_file)
+        self.assertNotIn(parser_def.module, json_data['modules'])
+
+    @tempdir()
+    def test_delete_removes_defaults(self):
+        parser_def = ParserDefinition.create('test_script.py')
+        parser_def.add_argument('--foo')
+        parser_def.set_defaults(foo='bar')
+        json_data = argutil.load(parser_def.defaults_file)
+        self.assertIn(parser_def.module, json_data)
+        parser_def.delete()
+        json_data = argutil.load(parser_def.defaults_file)
+        self.assertNotIn(parser_def.module, json_data)
 
 
 if __name__ == '__main__':

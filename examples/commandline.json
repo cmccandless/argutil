@@ -93,6 +93,56 @@
                     ]
                 }
             }
+        },
+        "templates": {
+            "templates": {
+                "PARENT_TEMPLATE" : {
+                    "examples": [
+                        {
+                            "usage": "--foo",
+                            "description": "example from parent template"
+                        }
+                    ],
+                    "args": [
+                        {
+                            "long": "--foo"
+                        }
+                    ]
+                },
+                "CHILD_TEMPLATE" : {
+                    "parent": "PARENT_TEMPLATE",
+                    "examples": [
+                        {
+                            "usage": "--bar",
+                            "description": "example from child template"
+                        }
+                    ],
+                    "args": [
+                        {
+                            "long": "--bar"
+                        }
+                    ]
+                }
+            },
+            "modules": {
+                "command": {
+                    "template": "CHILD_TEMPLATE",
+                    "examples": [
+                        {
+                            "usage": "--baz",
+                            "description": "example from command"
+                        }
+                    ],
+                    "args": [
+                        {
+                            "long": "--baz"
+                        }
+                    ]
+                },
+                "other": {
+                    "template": "PARENT_TEMPLATE"
+                }
+            }
         }
     }
 }

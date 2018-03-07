@@ -1,5 +1,11 @@
 Changelog
 =========
+v1.1.5
+------
+- Add jsonschema validation for definitions file
+- Add example for template usage
+- Add tests for submodules and templates
+
 v1.1.4
 ------
 - Add callable() decorator to replace env parameter in get_parser

@@ -28,7 +28,7 @@ class DefaultsFileTest(unittest.TestCase):
                 }
             }
         }
-        actual = parser_def.load(parser_def.defaults_file)
+        actual = argutil.load(parser_def.defaults_file)
         self.assertDictEqual(actual, expected)
 
     @tempdir()

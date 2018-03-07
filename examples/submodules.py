@@ -41,6 +41,7 @@ from __future__ import print_function
 import argutil
 
 
+@argutil.callable()
 def this(opts):
     if opts.config:
         print('config:', opts.config)
@@ -51,6 +52,7 @@ def this(opts):
         print('foo set')
 
 
+@argutil.callable()
 def that(opts):
     if opts.config:
         print('config:', opts.config)
@@ -59,10 +61,6 @@ def that(opts):
         print('then:', opts.then)
 
 
-env = {
-    'this': this,
-    'that': that
-}
-parser = argutil.get_parser(env=env)
+parser = argutil.get_parser()
 opts = parser.parse_args()
 opts.func(opts)

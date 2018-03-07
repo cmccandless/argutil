@@ -102,3 +102,5 @@ ENV/
 
 tmp/
 _build
+
+.pytest_cache/
