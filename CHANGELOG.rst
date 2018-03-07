@@ -1,5 +1,9 @@
 Changelog
 =========
+v1.1.6
+------
+- Fix bug with auto-detected script path
+
 v1.1.5
 ------
 - Add jsonschema validation for definitions file
