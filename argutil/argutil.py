@@ -93,7 +93,7 @@ class ParserDefinition(object):
     ):
         if filepath is None:
             filepath = get_file(
-                __stackdepth__=kwargs.get('_-stackdepth__', 1) + 1
+                __stackdepth__=kwargs.get('__stackdepth__', 1) + 1
             )
         else:
             filepath = os.path.abspath(filepath)
