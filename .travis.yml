@@ -25,3 +25,14 @@ script:
 
 after_success:
   - coveralls
+
+deploy:
+  provider: pypi
+  user: cmccandless
+  password: $PYPI_PASSWORD
+  on:
+    branch: master
+    tags: true
+    distributions: sdist bdist_wheel
+    repo: cmccandless/argutil
+    python: '3.6'
