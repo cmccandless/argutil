@@ -1,5 +1,9 @@
 Changelog
 =========
+v1.1.9
+------
+- Add auto-deploy via Travis-CI
+
 v1.1.6
 ------
 - Fix bug with auto-detected script path
