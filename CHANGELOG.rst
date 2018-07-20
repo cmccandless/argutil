@@ -1,6 +1,6 @@
 Changelog
 =========
-v1.1.8
+v1.1.9
 ------
 - Add auto-deploy via Travis-CI
 
