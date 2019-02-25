@@ -1,6 +1,6 @@
 flake8==3.7.5
 pep8>=1.7,<1.7.99
-ddt==1.2.0
+ddt==1.2.1
 coveralls>=1.2.0
 jsonschema>=2.6.0
 -e .
